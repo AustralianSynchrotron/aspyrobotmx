@@ -1,0 +1,713 @@
+###########################################################################
+
+# Robot toolset calibration timestamp read from Jinhu SPEL variable g_TS_Toolset$
+
+record(stringin, "$(P)$(R):TCTS_MON")
+{
+    field(DESC, "MX tool cal ts")
+    field(SCAN, "$(SCAN)")
+}
+
+###########################################################################
+
+# Robot left cassette calibration timestamp read from Jinhu SPEL variable g_TS_Left_Cassette$
+
+record(stringin, "$(P)$(R):LCCTS_MON")
+{
+    field(DESC, "MX left cas cal ts")
+    field(SCAN, "$(SCAN)")
+}
+
+###########################################################################
+
+# Robot middle cassette calibration timestamp read from Jinhu SPEL variable g_TS_Middle_Cassette$
+
+record(stringin, "$(P)$(R):MCCTS_MON")
+{
+    field(DESC, "MX mid cas cal ts")
+    field(SCAN, "$(SCAN)")
+}
+
+###########################################################################
+
+# Robot right cassette calibration timestamp read from Jinhu SPEL variable g_TS_Right_Cassette$
+
+record(stringin, "$(P)$(R):RCCTS_MON")
+{
+    field(DESC, "MX right cas cal ts")
+    field(SCAN, "$(SCAN)")
+}
+
+###########################################################################
+
+# Robot gonio calibration timestamp read from Jinhu SPEL variable g_TS_Goniometer$
+
+record(stringin, "$(P)$(R):GCTS_MON")
+{
+    field(DESC, "MX gonio cal ts")
+    field(SCAN, "$(SCAN)")
+}
+
+###########################################################################
+
+# Robot TQ_Scale_Picker read from Jinhu SPEL variable g_TQ_Scale_Picker
+
+record (ai, "$(P)$(R):SPICKER_MON") 
+{
+  field(SCAN, "$(SCAN)")
+}
+
+###########################################################################
+
+# Robot TQ_Scale_Placer read from Jinhu SPEL variable g_TQ_Scale_Placer
+
+record (ai, "$(P)$(R):SPLACER_MON") 
+{
+  field(SCAN, "$(SCAN)")
+}
+
+###########################################################################
+
+# Robot SideScale_Placer read from Jinhu SPEL variable g_SideScale_Placer
+
+record (ai, "$(P)$(R):SSPLACER_MON") 
+{
+  field(SCAN, "$(SCAN)")
+}
+
+###########################################################################
+
+# Gripper opened status
+
+record(bi, "$(P)$(R):GRIPOPEN_STATUS")
+{
+    field(DESC, "gripper open status")
+    field(ZNAM, "not open")
+    field(ONAM, "open")
+    field(FLNK, "$(P)$(R):GRIPCLOSE_STATUS")
+}
+
+###########################################################################
+
+# Gripper closed status
+
+record(bi, "$(P)$(R):GRIPCLOSE_STATUS")
+{
+    field(DESC, "gripper close status")
+    field(ZNAM, "not closed")
+    field(ONAM, "closed")
+    field(FLNK, "$(P)$(R):LIDCLOSE_STATUS")
+}
+
+
+###########################################################################
+
+# lid closed status
+
+record(bi, "$(P)$(R):LIDCLOSE_STATUS")
+{
+    field(DESC, "lid closed status")
+    field(ZNAM, "not closed")
+    field(ONAM, "closed")
+    field(FLNK, "$(P)$(R):LIDOPEN_STATUS")
+}
+
+###########################################################################
+
+# lid opened status
+
+record(bi, "$(P)$(R):LIDOPEN_STATUS")
+{
+    field(DESC, "lid open status")
+    field(ZNAM, "not open")
+    field(ONAM, "open")
+    field(FLNK, "$(P)$(R):HEATER_STATUS")
+}
+
+###########################################################################
+
+# SPEL LN2 level status
+
+record(bi, "$(P)$(R):LN2LEVEL_STATUS")
+{
+    field(DESC, "SPEL LN2 level")
+    field(ZNAM, "Low")
+    field(ONAM, "High")
+    field(SCAN, "$(SCAN)")
+}
+
+###########################################################################
+
+# SPEL LN2 level cmd
+
+record(bo, "$(P)$(R):LN2LEVEL_CMD")
+{
+    field(DESC, "SPEL LN2 level")
+    field(ZNAM, "Low")
+    field(ONAM, "High")
+}
+
+###########################################################################
+
+# heater hot status
+
+record(bi, "$(P)$(R):HEATER_STATUS")
+{
+    field(DESC, "heater status")
+    field(ZNAM, "cold")
+    field(ONAM, "hot")
+}
+
+###########################################################################
+
+# heater on off cmd
+
+record(bo, "$(P)$(R):HEATER_CMD")
+{
+    field(DESC, "heater cmd")
+    field(ZNAM, "cold")
+    field(ONAM, "hot")
+
+}
+
+###########################################################################
+
+# dry air on off cmd
+
+record(bo, "$(P)$(R):DRYAIR_CMD")
+{
+    field(DESC, "dry air cmd")
+    field(ZNAM, "off")
+    field(ONAM, "on")
+
+}
+
+###########################################################################
+
+# lid open close cmd
+
+record(bo, "$(P)$(R):LID_CMD")
+{
+    field(DESC, "lid open cmd")
+    field(ZNAM, "close")
+    field(ONAM, "open")
+
+}
+
+###########################################################################
+
+# gripper open close cmd
+
+record(bo, "$(P)$(R):GRIP_CMD")
+{
+    field(DESC, "gripper cmd")
+    field(ZNAM, "open")
+    field(ONAM, "close")
+}
+
+###########################################################################
+
+# Specify what to probe
+
+record(waveform, "$(P)$(R):PROBELEFTREQUEST_CMD")
+{
+    field(DESC, "probe request cmd")
+    field(NORD, "97")
+    field(NELM, "97")
+    field(FTVL, "CHAR")
+}
+
+###########################################################################
+
+# Specify what to probe
+
+record(waveform, "$(P)$(R):PROBEMIDDLEREQUEST_CMD")
+{
+    field(DESC, "probe request cmd")
+    field(NORD, "97")
+    field(NELM, "97")
+    field(FTVL, "CHAR")
+}
+
+###########################################################################
+
+# Specify what to probe
+
+record(waveform, "$(P)$(R):PROBERIGHTREQUEST_CMD")
+{
+    field(DESC, "probe request cmd")
+    field(NORD, "97")
+    field(NELM, "97")
+    field(FTVL, "CHAR")
+}
+
+###########################################################################
+
+# Retrieve dumbell from LN2 and take to P1
+
+record(bo, "$(P)$(R):DUMBLN2_CMD")
+{
+    field(DESC, "retrieve dumbell")
+    field(SCAN, "Passive")
+    field(ZNAM, "Dumbell from LN2")
+    field(ONAM, "Dumbell from LN2")
+}
+
+###########################################################################
+
+# Get dumbell from LN2 run status
+
+record(mbbi, "$(P)$(R):DUMBLN2_STATUS")
+{
+    field(DESC, "retrieve dumbell")
+    field(SCAN, "$(SCAN)")
+    field(ZRVL, "0")
+    field(ZRST, "Done")
+    field(ONVL, "1")
+    field(ONST, "Running")
+    field(TWVL, "2")
+    field(TWST, "Event")
+    field(THVL, "3")
+    field(THST, "Halted")
+    field(FRVL, "4")
+    field(FRST, "QPaused")
+    field(FVVL, "5")
+    field(FVST, "Error")
+}
+
+###########################################################################
+
+# Sample from picker to gonio cmd
+
+record(bo, "$(P)$(R):PICK2GONIO_CMD")
+{
+    field(DESC, "sample from picker to gonio")
+    field(SCAN, "Passive")
+    field(ZNAM, "PickerToGonio")
+    field(ONAM, "PickerToGonio")
+}
+
+###########################################################################
+
+# Sample from picker to gonio run status
+
+record(mbbi, "$(P)$(R):PICK2GONIO_STATUS")
+{
+    field(DESC, "picker to gonio")
+    field(SCAN, "$(SCAN)")
+    field(ZRVL, "0")
+    field(ZRST, "Done")
+    field(ONVL, "1")
+    field(ONST, "Running")
+    field(TWVL, "2")
+    field(TWST, "Event")
+    field(THVL, "3")
+    field(THST, "Halted")
+    field(FRVL, "4")
+    field(FRST, "QPaused")
+    field(FVVL, "5")
+    field(FVST, "Error")
+}
+
+###########################################################################
+
+# Home command
+
+record(bo, "$(P)$(R):GOHOME_CMD")
+{
+    field(DESC, "Go home cmd")
+    field(SCAN, "Passive")
+    field(ZNAM, "GoHome")
+    field(ONAM, "GoHome")
+}
+
+###########################################################################
+
+# GoHome run status
+
+record(mbbi, "$(P)$(R):GOHOME_STATUS")
+{
+    field(DESC, "go home")
+    field(SCAN, "$(SCAN)")
+    field(ZRVL, "0")
+    field(ZRST, "Done")
+    field(ONVL, "1")
+    field(ONST, "Running")
+    field(TWVL, "2")
+    field(TWST, "Event")
+    field(THVL, "3")
+    field(THST, "Halted")
+    field(FRVL, "4")
+    field(FRST, "QPaused")
+    field(FVVL, "5")
+    field(FVST, "Error")
+}
+
+###########################################################################
+
+# Go P1 command
+
+record(bo, "$(P)$(R):GOP1_CMD")
+{
+    field(DESC, "Go p1 cmd")
+    field(SCAN, "Passive")
+    field(ZNAM, "GoP1")
+    field(ONAM, "GoP1")
+}
+
+###########################################################################
+
+# P1 run status
+
+record(mbbi, "$(P)$(R):GOP1_STATUS")
+{
+    field(DESC, "go p1")
+    field(SCAN, "$(SCAN)")
+    field(ZRVL, "0")
+    field(ZRST, "Done")
+    field(ONVL, "1")
+    field(ONST, "Running")
+    field(TWVL, "2")
+    field(TWST, "Event")
+    field(THVL, "3")
+    field(THST, "Halted")
+    field(FRVL, "4")
+    field(FRST, "QPaused")
+    field(FVVL, "5")
+    field(FVST, "Error")
+}
+
+###########################################################################
+
+# PutMagnetInCradleAndGoHome
+
+record(bo, "$(P)$(R):MCHOME_CMD")
+{
+    field(DESC, "mag crad home")
+    field(ZNAM, "CradleHome")
+    field(ONAM, "CradleHome")
+}
+
+###########################################################################
+
+# PutMagnetInCradleAndGoHome run status
+
+record(mbbi, "$(P)$(R):MCHOME_STATUS")
+{
+    field(DESC, "mag crad home")
+    field(SCAN, "$(SCAN)")
+    field(ZRVL, "0")
+    field(ZRST, "Done")
+    field(ONVL, "1")
+    field(ONST, "Running")
+    field(TWVL, "2")
+    field(TWST, "Event")
+    field(THVL, "3")
+    field(THST, "Halted")
+    field(FRVL, "4")
+    field(FRST, "QPaused")
+    field(FVVL, "5")
+    field(FVST, "Error")
+}
+
+###########################################################################
+
+# FindMagnet
+
+record(bo, "$(P)$(R):FM_CMD")
+{
+    field(DESC, "FindMagnet")
+    field(ZNAM, "FindMagnet")
+    field(ONAM, "FindMagnet")
+}
+
+###########################################################################
+
+# FindMagnet
+
+record(mbbi, "$(P)$(R):FM_STATUS")
+{
+    field(DESC, "FindMagnet")
+    field(SCAN, "$(SCAN)")
+    field(ZRVL, "0")
+    field(ZRST, "Done")
+    field(ONVL, "1")
+    field(ONST, "Running")
+    field(TWVL, "2")
+    field(TWST, "Event")
+    field(THVL, "3")
+    field(THST, "Halted")
+    field(FRVL, "4")
+    field(FRST, "QPaused")
+    field(FVVL, "5")
+    field(FVST, "Error")
+}
+
+###########################################################################
+
+# PostCalibration
+
+record(bo, "$(P)$(R):POSTCAL_CMD")
+{
+    field(DESC, "PostCal")
+    field(ZNAM, "PostCal")
+    field(ONAM, "PostCal")
+}
+
+###########################################################################
+
+# PostCalibration
+
+record(mbbi, "$(P)$(R):POSTCAL_STATUS")
+{
+    field(DESC, "PostCalibration")
+    field(SCAN, "$(SCAN)")
+    field(ZRVL, "0")
+    field(ZRST, "Done")
+    field(ONVL, "1")
+    field(ONST, "Running")
+    field(TWVL, "2")
+    field(TWST, "Event")
+    field(THVL, "3")
+    field(THST, "Halted")
+    field(FRVL, "4")
+    field(FRST, "QPaused")
+    field(FVVL, "5")
+    field(FVST, "Error")
+}
+
+###########################################################################
+
+# PickerCalibration
+
+record(bo, "$(P)$(R):PICKERCAL_CMD")
+{
+    field(DESC, "PickerCal")
+    field(ZNAM, "PickerCal")
+    field(ONAM, "PickerCal")
+}
+
+###########################################################################
+
+# PickerCalibration
+
+record(mbbi, "$(P)$(R):PICKERCAL_STATUS")
+{
+    field(DESC, "PickerCalibration")
+    field(SCAN, "$(SCAN)")
+    field(ZRVL, "0")
+    field(ZRST, "Done")
+    field(ONVL, "1")
+    field(ONST, "Running")
+    field(TWVL, "2")
+    field(TWST, "Event")
+    field(THVL, "3")
+    field(THST, "Halted")
+    field(FRVL, "4")
+    field(FRST, "QPaused")
+    field(FVVL, "5")
+    field(FVST, "Error")
+}
+
+###########################################################################
+
+# PlacerCalibration
+
+record(bo, "$(P)$(R):PLACERCAL_CMD")
+{
+    field(DESC, "PlacerCal")
+    field(ZNAM, "PlacerCal")
+    field(ONAM, "PlacerCal")
+}
+
+###########################################################################
+
+# PlacerCalibration
+
+record(mbbi, "$(P)$(R):PLACERCAL_STATUS")
+{
+    field(DESC, "PlacerCalibration")
+    field(SCAN, "$(SCAN)")
+    field(ZRVL, "0")
+    field(ZRST, "Done")
+    field(ONVL, "1")
+    field(ONST, "Running")
+    field(TWVL, "2")
+    field(TWST, "Event")
+    field(THVL, "3")
+    field(THST, "Halted")
+    field(FRVL, "4")
+    field(FRST, "QPaused")
+    field(FVVL, "5")
+    field(FVST, "Error")
+}
+
+###########################################################################
+
+# CalculateToolset
+
+record(bo, "$(P)$(R):CT_CMD")
+{
+    field(DESC, "CalculateToolset")
+    field(ZNAM, "CalcToolset")
+    field(ONAM, "CalcToolset")
+}
+
+###########################################################################
+
+# CalculateToolset
+
+record(mbbi, "$(P)$(R):CT_STATUS")
+{
+    field(DESC, "CalculateToolset")
+    field(SCAN, "$(SCAN)")
+    field(ZRVL, "0")
+    field(ZRST, "Done")
+    field(ONVL, "1")
+    field(ONST, "Running")
+    field(TWVL, "2")
+    field(TWST, "Event")
+    field(THVL, "3")
+    field(THST, "Halted")
+    field(FRVL, "4")
+    field(FRST, "QPaused")
+    field(FVVL, "5")
+    field(FVST, "Error")
+}
+
+###########################################################################
+
+# FineTuneToolSet
+
+record(bo, "$(P)$(R):FTS_CMD")
+{
+    field(DESC, "FineTuneToolSet")
+    field(ZNAM, "FineToolSet")
+    field(ONAM, "FineToolSet")
+}
+
+###########################################################################
+
+# FineTuneToolSet
+
+record(mbbi, "$(P)$(R):FTS_STATUS")
+{
+    field(DESC, "FineTuneToolSet")
+    field(SCAN, "$(SCAN)")
+    field(ZRVL, "0")
+    field(ZRST, "Done")
+    field(ONVL, "1")
+    field(ONST, "Running")
+    field(TWVL, "2")
+    field(TWST, "Event")
+    field(THVL, "3")
+    field(THST, "Halted")
+    field(FRVL, "4")
+    field(FRST, "QPaused")
+    field(FVVL, "5")
+    field(FVST, "Error")
+}
+
+###########################################################################
+
+# VB_MagnetCal
+
+record(bo, "$(P)$(R):VBMC_CMD")
+{
+    field(DESC, "VB_MagnetCal")
+    field(ZNAM, "VB_MagnetCal")
+    field(ONAM, "VB_MagnetCal")
+}
+
+###########################################################################
+
+# VB_MagnetCal
+
+record(mbbi, "$(P)$(R):VBMC_STATUS")
+{
+    field(DESC, "VB_MagnetCal")
+    field(SCAN, "$(SCAN)")
+    field(ZRVL, "0")
+    field(ZRST, "Done")
+    field(ONVL, "1")
+    field(ONST, "Running")
+    field(TWVL, "2")
+    field(TWST, "Event")
+    field(THVL, "3")
+    field(THST, "Halted")
+    field(FRVL, "4")
+    field(FRST, "QPaused")
+    field(FVVL, "5")
+    field(FVST, "Error")
+}
+
+###########################################################################
+
+# VB_CassetteCal
+
+record(bo, "$(P)$(R):VBCC_CMD")
+{
+    field(DESC, "VB_CassetteCal")
+    field(ZNAM, "VB_CassetteCal")
+    field(ONAM, "VB_CassetteCal")
+}
+
+###########################################################################
+
+# VB_CassetteCal
+
+record(mbbi, "$(P)$(R):VBCC_STATUS")
+{
+    field(DESC, "VB_CassetteCal")
+    field(SCAN, "$(SCAN)")
+    field(ZRVL, "0")
+    field(ZRST, "Done")
+    field(ONVL, "1")
+    field(ONST, "Running")
+    field(TWVL, "2")
+    field(TWST, "Event")
+    field(THVL, "3")
+    field(THST, "Halted")
+    field(FRVL, "4")
+    field(FRST, "QPaused")
+    field(FVVL, "5")
+    field(FVST, "Error")
+}
+
+###########################################################################
+
+# VB_GonioCal
+
+record(bo, "$(P)$(R):VBGC_CMD")
+{
+    field(DESC, "VB_GonioCal")
+    field(ZNAM, "VB_GonioCal")
+    field(ONAM, "VB_GonioCal")
+}
+
+###########################################################################
+
+# VB_GonioCal
+
+record(mbbi, "$(P)$(R):VBGC_STATUS")
+{
+    field(DESC, "VB_GonioCal")
+    field(SCAN, "$(SCAN)")
+    field(ZRVL, "0")
+    field(ZRST, "Done")
+    field(ONVL, "1")
+    field(ONST, "Running")
+    field(TWVL, "2")
+    field(TWST, "Event")
+    field(THVL, "3")
+    field(THST, "Halted")
+    field(FRVL, "4")
+    field(FRST, "QPaused")
+    field(FVVL, "5")
+    field(FVST, "Error")
+}
+
+###########################################################################
+
+#end
+

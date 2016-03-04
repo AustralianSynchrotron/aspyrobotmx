@@ -10,5 +10,11 @@ setup(
     packages=['aspyrobotmx'],
     install_requires=[
         'aspyrobot',
+        'click',
     ],
+    entry_points={
+        'console_scripts': [
+            'pyrobotmxserver=aspyrobotmx.cmd:run_server'
+        ],
+    },
 )

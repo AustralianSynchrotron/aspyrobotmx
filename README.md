@@ -24,3 +24,9 @@ pip install -r requirements.txt
 pip install .
 py.test
 ```
+
+## Running
+
+```
+pyrobotmxserver --config config.json SR08ID01ROB01
+```

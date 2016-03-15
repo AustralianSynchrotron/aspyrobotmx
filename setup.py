@@ -11,6 +11,7 @@ setup(
     install_requires=[
         'aspyrobot',
         'click',
+        'colorlog',
     ],
     entry_points={
         'console_scripts': [

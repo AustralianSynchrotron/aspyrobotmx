@@ -195,11 +195,11 @@ class RobotServerMX(RobotServer):
     def clear(self):
         self.robot.put('generic_command', b'ClearSamplePositions')
 
-    def prepare_for_mount(self, position, column, port):
-        self.logger.info('prepare_for_mount: %r %r %r', position, column, port)
+    def prepare_for_mount(self):
+        self.logger.info('prepare_for_mount')
         if self.robot.closest_point != 0:
             return {'error': 'Not at home (near P%s)' % self.robot.closest_point}
-        self.robot.put('generic_command', b'JumpHomeToCoolingPoint')
+        self.robot.put('generic_command', b'PrepareForMountDismount')
 
     def mount(self, position, column, port):
         self.logger.info('mount: %r %r %r', position, column, port)

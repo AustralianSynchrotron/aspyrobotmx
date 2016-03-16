@@ -25,10 +25,13 @@ class RobotClientMX(RobotClient):
     def clear(self):
         return self.run_operation('clear')
 
-    def prepare_for_mount(self, position, column, port):
-        return self.run_operation('prepare_for_mount', position=position,
-                                  column=column, port=port)
+    def prepare_for_mount(self):
+        return self.run_operation('prepare_for_mount')
 
     def mount(self, position, column, port):
         return self.run_operation('mount', position=position,
+                                  column=column, port=port)
+
+    def dismount(self, position, column, port):
+        return self.run_operation('dismount', position=position,
                                   column=column, port=port)

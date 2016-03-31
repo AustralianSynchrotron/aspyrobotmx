@@ -166,11 +166,7 @@ class RobotServerMX(RobotServer):
         self.logger.debug('probe ports: %r', ports)
         if not self.foreground_operation_lock.acquire(False):
             return {'error': 'busy'}
-        for position in ['left', 'middle', 'right']:
-            position_ports = ports[position]
-            position_str = ''.join(str(p) for p in position_ports)
-            self.robot.put('{position}_probe_request'.format(position=position),
-                           position_str.encode('utf-8'), wait=True)
+        self.set_probe_requests(ports)
         self.robot.put('generic_command', b'ProbeCassettes', wait=True)
         epics.poll(DELAY_TO_PROCESS)
         if self.robot.foreground_error:
@@ -183,17 +179,22 @@ class RobotServerMX(RobotServer):
         self.pins_lost = 0
 
     def set_holder_type(self, position, type):
-        self.holder_types[position] = type
-        self.publish_queue.put({'holder_types': self.holder_types})
+        # TODO: Should call SPEL function
+        pass
 
-    def set_port_states(self, position, indices, state):
-        # TODO: Should this update SPEL?
-        for index in indices:
-            self.port_states[position][index] = state
-        self.publish_queue.put({'port_states': self.port_states})
+    def set_port_state(self, position, column, port, state):
+        self.logger.error('%r %r %r %r', position, column, port, state)
+        args = '{} {} {} {}'.format(position[0], column, port, state).upper()
+        self.logger.error('%r', args)
+        self.robot.put('run_args', args.encode('utf-8'))
+        epics.poll(DELAY_TO_PROCESS)
+        self.robot.put('generic_command', b'SetPortState')
 
-    def clear(self):
-        self.robot.put('generic_command', b'ClearSamplePositions')
+    def reset_ports(self, ports):
+        self.set_probe_requests(ports)
+        epics.poll(DELAY_TO_PROCESS)
+        # TODO: Needs to be implemented in SPEL
+        self.robot.put('generic_command', b'ResetPorts')
 
     def prepare_for_mount(self):
         self.logger.info('prepare_for_mount')
@@ -220,3 +221,14 @@ class RobotServerMX(RobotServer):
         self.robot.put('run_args', args.encode('utf-8'))
         epics.poll(DELAY_TO_PROCESS)
         self.robot.put('generic_command', b'DismountSample')
+
+    # ******************************************************************
+    # ********************* Helper methods *****************************
+    # ******************************************************************
+
+    def set_probe_requests(self, ports):
+        for position in ['left', 'middle', 'right']:
+            position_ports = ports[position]
+            position_str = ''.join(str(p) for p in position_ports)
+            self.robot.put('{position}_probe_request'.format(position=position),
+                           position_str.encode('utf-8'), wait=True)

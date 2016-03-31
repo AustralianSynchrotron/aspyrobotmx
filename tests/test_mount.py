@@ -19,16 +19,16 @@ def server():
 
 
 def test_prepare_for_mount_sends_robot_to_cooling_point(server):
-    result = server.prepare_for_mount('left', 'A', '1')
+    result = server.prepare_for_mount()
     process()
     assert result is None
-    assert server.robot.PV('generic_command').char_value == 'JumpHomeToCoolingPoint'
+    assert server.robot.PV('generic_command').char_value == 'PrepareForMountDismount'
 
 
 def test_prepare_for_mount_fails_if_not_at_home(server):
     server.robot.put('closest_point', 22)
     process()
-    result = server.prepare_for_mount('left', 'A', '1')
+    result = server.prepare_for_mount()
     assert result['error'] is not None
 
 

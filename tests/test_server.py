@@ -8,6 +8,9 @@ def server():
     server = RobotServerMX(RobotMX('ROBOT_MX_TEST:'))
     server.robot.put('run_args', b'\0')
     server.robot.put('generic_command', b'\0')
+    server.robot.put('left_probe_request', b'\0')
+    server.robot.put('middle_probe_request', b'\0')
+    server.robot.put('right_probe_request', b'\0')
     epics.poll(.01)
     return server
 
@@ -58,8 +61,18 @@ def test_fetch_all_data(server):
     assert server.robot.PV('generic_command').char_value == 'JSONDataRequest'
 
 
-def test_clear(server):
-    server.clear()
+def test_set_port_state_can_set_single_ports_to_error(server):
+    server.set_port_state('left', 'A', 1, 2)
     epics.poll(.1)
-    # TODO: Still needs to be implemented in SPEL
-    assert server.robot.PV('generic_command').char_value == 'ClearSamplePositions'
+    assert server.robot.PV('run_args').char_value == 'L A 1 2'
+    assert server.robot.PV('generic_command').char_value == 'SetPortState'
+
+
+def test_reset_ports(server):
+    ports = {'left': [0] * 96, 'middle': [0] * 96, 'right': [1] * 96}
+    server.reset_ports(ports)
+    epics.poll(.1)
+    assert server.robot.PV('left_probe_request').char_value == '0' * 96
+    assert server.robot.PV('middle_probe_request').char_value == '0' * 96
+    assert server.robot.PV('right_probe_request').char_value == '1' * 96
+    assert server.robot.PV('generic_command').char_value == 'ResetPorts'

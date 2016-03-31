@@ -32,13 +32,14 @@ def test_set_lid(client):
     assert client.run_operation.call_args == call('set_lid', value=1)
 
 
-def test_set_port_states(client):
+def test_set_port_state(client):
     position = 'left'
-    indices = [0, 1, 2]
-    state = 1
-    client.set_port_states(position, indices, state)
+    column = 'A'
+    port = 1
+    state = 2
+    client.set_port_state(position, column, port, state)
     assert client.run_operation.call_args == call(
-        'set_port_states', position=position, indices=indices, state=state
+        'set_port_state', position=position, column=column, port=port, state=state
     )
 
 
@@ -46,8 +47,3 @@ def test_set_holder_type(client):
     client.set_holder_type('left', 0)
     assert client.run_operation.call_args == call('set_holder_type',
                                                   position='left', type=0)
-
-
-def test_clear(client):
-    client.clear()
-    assert client.run_operation.call_args == call('clear')

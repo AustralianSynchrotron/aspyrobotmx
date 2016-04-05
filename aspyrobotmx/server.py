@@ -1,4 +1,8 @@
 from aspyrobot import RobotServer
+from aspyrobot.server import (foreground_operation, background_operation,
+                              query_operation)
+from aspyrobot.exceptions import RobotError
+
 import epics
 from itertools import repeat
 
@@ -54,7 +58,7 @@ class ServerAttr(object):
 
     def __set__(self, instance, value):
         setattr(instance, '_' + self.name, value)
-        instance.publish_queue.put({self.name: value})
+        instance.values_update({self.name: value})
 
 
 class RobotServerMX(RobotServer):
@@ -96,15 +100,50 @@ class RobotServerMX(RobotServer):
         self.fetch_all_data()
 
     def fetch_all_data(self):
-        self.robot.put('run_args', b'PSDC LMR')
+        self.robot.run_args.put('PSDC LMR')
         epics.poll(DELAY_TO_PROCESS)
-        self.robot.put('generic_command', b'JSONDataRequest')
+        self.robot.generic_command.put('JSONDataRequest')
 
+    # ******************************************************************
+    # ************************ Updates ******************************
+    # ******************************************************************
+
+    def update_cassette_type(self, value, position, **_):
+        self.holder_types[position] = HOLDER_TYPE_LOOKUP[value]
+        self.values_update({'holder_types': self.holder_types})
+
+    def update_puck_states(self, value, position, start, **_):
+        if not value:
+            return
+        end = start + len(value)
+        for slot, state in zip(SLOTS[start:end], value):
+            self.puck_states[position][slot] = state
+        self.values_update({'puck_states': self.puck_states})
+
+    def update_port_states(self, value, position, start, **_):
+        end = start + len(value)
+        self.port_states[position][start:end] = value
+        self.values_update({'port_states': self.port_states})
+
+    def update_sample_distances(self, value, position, start, **_):
+        end = start + len(value)
+        self.port_distances[position][start:end] = value
+        self.values_update({'port_distances': self.port_distances})
+
+    def update_sample_locations(self, value, **_):
+        self.sample_locations = value
+
+    def update_dumbbell_state(self, value, **_):
+        # TODO: Test
+        self.logger.error('DUMBBELL_STATE: %r', value)
+
+    # ******************************************************************
+    # ************************ Operations ******************************
+    # ******************************************************************
+
+    @query_operation
     def refresh(self):
-        state = self.robot.save_state()
-        for attr, pv in self.robot._pvs.items():
-            if pv.type == 'ctrl_char':
-                state[attr] = pv.char_value
+        state = self.robot.snapshot()
         for attr, obj in RobotServerMX.__dict__.items():
             if isinstance(obj, ServerAttr):
                 state[attr] = getattr(self, attr)
@@ -114,113 +153,87 @@ class RobotServerMX(RobotServer):
         state['port_distances'] = self.port_distances
         return state
 
-    def update_cassette_type(self, value, position, **_):
-        self.holder_types[position] = HOLDER_TYPE_LOOKUP[value]
-        self.publish_queue.put({'holder_types': self.holder_types})
+    @background_operation
+    def set_gripper(self, handle, value):
+        self.robot.gripper_command.put(value)
 
-    def update_puck_states(self, value, position, start, **_):
-        if not value:
-            return
-        end = start + len(value)
-        for slot, state in zip(SLOTS[start:end], value):
-            self.puck_states[position][slot] = state
-        self.publish_queue.put({'puck_states': self.puck_states})
+    @background_operation
+    def set_lid(self, handle, value):
+        self.robot.lid_command.put(value)
 
-    def update_port_states(self, value, position, start, **_):
-        end = start + len(value)
-        self.port_states[position][start:end] = value
-        self.publish_queue.put({'port_states': self.port_states})
-
-    def update_sample_distances(self, value, position, start, **_):
-        end = start + len(value)
-        self.port_distances[position][start:end] = value
-        self.publish_queue.put({'port_distances': self.port_distances})
-
-    def update_sample_locations(self, value, **_):
-        self.sample_locations = value
-
-    def update_dumbbell_state(self, value, **_):
-        # TODO: Test
-        self.logger.error('DUMBBELL_STATE: %r', value)
-
-    def set_gripper(self, value):
-        self.robot.gripper_command = value
-
-    def set_lid(self, value):
-        self.robot.lid_command = value
-
-    def calibrate(self, target, run_args):
+    @foreground_operation
+    def calibrate(self, handle, target, run_args):
         # TODO: Validate args
         self.logger.debug('calibrate target: %r, run_args: %r', target, run_args)
-        if target not in {'toolset', 'cassette', 'goniometer'}:
-            return {'error': 'invalid target for calibration'}
-        if not self.foreground_operation_lock.acquire(False):
-            return {'error': 'busy'}
-        self.robot.PV('run_args').put(run_args.encode('utf-8'), wait=True)
-        self.robot.execute('{target}_calibration'.format(target=target))
-        # TODO: Check for errors and release foreground_operation_lock?
-        return {'error': None}
+        if target == 'toolset':
+            cmd = 'VB_MagnetCal'
+        elif target == 'cassette':
+            cmd = 'VB_CassetteCal'
+        elif target == 'goniometer':
+            cmd = 'VB_GonioCal'
+        else:
+            raise RobotError('invalid target for calibration')
+        message = self.robot.run_foreground_operation(cmd, run_args)
+        self.logger.info('calibrate message: %r', message)
+        return message
 
-    def probe(self, ports):
+    @foreground_operation
+    def probe(self, handle, ports):
         # TODO: Validate args
         self.logger.debug('probe ports: %r', ports)
-        if not self.foreground_operation_lock.acquire(False):
-            return {'error': 'busy'}
         self.set_probe_requests(ports)
-        self.robot.put('generic_command', b'ProbeCassettes', wait=True)
+        self.robot.generic_command.put(b'ProbeCassettes', wait=True)
         epics.poll(DELAY_TO_PROCESS)
-        if self.robot.foreground_error:
-            # TODO: Release foreground_operation_lock?
-            return {'error': self.robot.PV('foreground_error_message').char_value}
-        return {'error': None}
+        err = self.robot.foreground_error.char_value
+        if err:
+            raise RobotError(err)
 
-    def reset_mount_counters(self):
+    @background_operation
+    def reset_mount_counters(self, handle):
         self.pins_mounted = 0
         self.pins_lost = 0
 
-    def set_holder_type(self, position, type):
+    @background_operation
+    def set_holder_type(self, handle, position, type):
         # TODO: Should call SPEL function
         pass
 
-    def set_port_state(self, position, column, port, state):
+    @background_operation
+    def set_port_state(self, handle, position, column, port, state):
         self.logger.error('%r %r %r %r', position, column, port, state)
         args = '{} {} {} {}'.format(position[0], column, port, state).upper()
         self.logger.error('%r', args)
-        self.robot.put('run_args', args.encode('utf-8'))
+        self.robot.run_args.put(args.encode('utf-8'))
         epics.poll(DELAY_TO_PROCESS)
-        self.robot.put('generic_command', b'SetPortState')
+        self.robot.generic_command.put(b'SetPortState')
 
-    def reset_ports(self, ports):
+    @background_operation
+    def reset_ports(self, handle, ports):
         self.set_probe_requests(ports)
         epics.poll(DELAY_TO_PROCESS)
         # TODO: Needs to be implemented in SPEL
-        self.robot.put('generic_command', b'ResetPorts')
+        self.robot.generic_command.put(b'ResetPorts')
 
-    def prepare_for_mount(self):
+    @foreground_operation
+    def prepare_for_mount(self, handle):
         self.logger.info('prepare_for_mount')
-        if self.robot.closest_point != 0:
-            return {'error': 'Not at home (near P%s)' % self.robot.closest_point}
-        self.robot.put('generic_command', b'PrepareForMountDismount')
+        self.robot.generic_command.put(b'PrepareForMountDismount')
 
-    def mount(self, position, column, port):
+    @foreground_operation
+    def mount(self, handle, position, column, port):
         self.logger.info('mount: %r %r %r', position, column, port)
-        if self.robot.closest_point != 3:
-            error = 'Not at cooling point (near P%s)' % self.robot.closest_point
-            return {'error': error}
         args = '{} {} {}'.format(position[0], column, port).upper()
-        self.robot.put('run_args', args.encode('utf-8'))
+        self.robot.run_args.put(args.encode('utf-8'))
         epics.poll(DELAY_TO_PROCESS)
-        self.robot.put('generic_command', b'MountSamplePort')
+        self.robot.generic_command.put(b'MountSamplePort')
 
-    def dismount(self, position, column, port):
+    @foreground_operation
+    def dismount(self, handle, position, column, port):
         self.logger.info('prepare_for_dismount: %r %r %r', position, column, port)
-        if self.robot.closest_point != 3:
-            error = 'Not at cooling point (near P%s)' % self.robot.closest_point
-            return {'error': error}
         args = '{} {} {}'.format(position[0], column, port).upper()
-        self.robot.put('run_args', args.encode('utf-8'))
+        self.robot.run_args.put(args.encode('utf-8'))
         epics.poll(DELAY_TO_PROCESS)
-        self.robot.put('generic_command', b'DismountSample')
+        self.robot.generic_command.put(b'DismountSample')
 
     # ******************************************************************
     # ********************* Helper methods *****************************
@@ -228,7 +241,7 @@ class RobotServerMX(RobotServer):
 
     def set_probe_requests(self, ports):
         for position in ['left', 'middle', 'right']:
-            position_ports = ports[position]
-            position_str = ''.join(str(p) for p in position_ports)
-            self.robot.put('{position}_probe_request'.format(position=position),
-                           position_str.encode('utf-8'), wait=True)
+            position_ports = ports.get(position, [])
+            position_ports_str = ''.join(str(p) for p in position_ports)
+            pv = getattr(self.robot, '{pos}_probe_request'.format(pos=position))
+            pv.put(position_ports_str)

@@ -1,13 +1,14 @@
+import pytest
+import epics
+
 from aspyrobotmx.server import (RobotServerMX,
                                 HOLDER_TYPE_CALIBRATION_CASSETTE,
                                 PUCK_STATE_EMPTY, PUCK_STATE_FULL)
-import pytest
 
 
-@pytest.fixture
+@pytest.yield_fixture
 def server():
-    server = RobotServerMX(robot=None)
-    return server
+    yield RobotServerMX(robot=None)
 
 
 def test_update_cassette_type(server):

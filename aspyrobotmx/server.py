@@ -182,11 +182,10 @@ class RobotServerMX(RobotServer):
         # TODO: Validate args
         self.logger.debug('probe ports: %r', ports)
         self.set_probe_requests(ports)
-        self.robot.generic_command.put(b'ProbeCassettes', wait=True)
         epics.poll(DELAY_TO_PROCESS)
-        err = self.robot.foreground_error.char_value
-        if err:
-            raise RobotError(err)
+        message = self.robot.run_foreground_operation('ProbeCassettes')
+        self.logger.info('probe message: %r', message)
+        return message
 
     @background_operation
     def reset_mount_counters(self, handle):

@@ -201,38 +201,39 @@ class RobotServerMX(RobotServer):
     def set_port_state(self, handle, position, column, port, state):
         self.logger.error('%r %r %r %r', position, column, port, state)
         args = '{} {} {} {}'.format(position[0], column, port, state).upper()
-        self.logger.error('%r', args)
-        self.robot.run_args.put(args.encode('utf-8'))
-        epics.poll(DELAY_TO_PROCESS)
-        self.robot.generic_command.put(b'SetPortState')
+        message = self.robot.run_foreground_operation('SetPortState', args)
+        self.logger.info('message: %r', message)
+        return message
 
     @background_operation
     def reset_ports(self, handle, ports):
         self.set_probe_requests(ports)
         epics.poll(DELAY_TO_PROCESS)
-        # TODO: Needs to be implemented in SPEL
-        self.robot.generic_command.put(b'ResetPorts')
+        message = self.robot.run_foreground_operation('ResetCassettePorts')
+        self.logger.info('message: %r', message)
+        return message
 
     @foreground_operation
     def prepare_for_mount(self, handle):
         self.logger.info('prepare_for_mount')
-        self.robot.generic_command.put(b'PrepareForMountDismount')
+        message = self.robot.run_foreground_operation('PrepareForMountDismount')
+        self.logger.info('message: %r', message)
+        return message
 
     @foreground_operation
     def mount(self, handle, position, column, port):
         self.logger.info('mount: %r %r %r', position, column, port)
-        args = '{} {} {}'.format(position[0], column, port).upper()
-        self.robot.run_args.put(args.encode('utf-8'))
-        epics.poll(DELAY_TO_PROCESS)
-        self.robot.generic_command.put(b'MountSamplePort')
+        port_code = '{} {} {}'.format(position[0], column, port).upper()
+        spel_operation = 'MountSamplePortAndGoHome'
+        message = self.robot.run_foreground_operation(spel_operation, port_code)
+        self.logger.info('message: %r', message)
+        return message
 
     @foreground_operation
     def dismount(self, handle, position, column, port):
         self.logger.info('prepare_for_dismount: %r %r %r', position, column, port)
-        args = '{} {} {}'.format(position[0], column, port).upper()
-        self.robot.run_args.put(args.encode('utf-8'))
-        epics.poll(DELAY_TO_PROCESS)
-        self.robot.generic_command.put(b'DismountSample')
+        port_code = '{} {} {}'.format(position[0], column, port).upper()
+        message = self.robot.run_foreground_operation('DismountSample', port_code)
 
     # ******************************************************************
     # ********************* Helper methods *****************************

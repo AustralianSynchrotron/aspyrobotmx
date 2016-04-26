@@ -6,12 +6,17 @@ import epics
 from aspyrobotmx import RobotServerMX, RobotMX
 
 
+UPDATE_ADDR = 'tcp://127.0.0.1:3000'
+REQUEST_ADDR = 'tcp://127.0.0.1:3001'
+
 handle = 1
 
 
 @pytest.yield_fixture
 def server():
-    server = RobotServerMX(RobotMX('ROBOT_MX_TEST:'))
+    server = RobotServerMX(robot=RobotMX('ROBOT_MX_TEST:'),
+                           update_addr=UPDATE_ADDR,
+                           request_addr=REQUEST_ADDR)
     server.robot.run_args.put(b'\0')
     server.robot.generic_command.put(b'\0')
     server.robot.left_probe_request.put(b'\0')
@@ -32,8 +37,8 @@ def operation_updates(server):
 
 
 def test_refresh_yields_strings_for_char_arrays(server):
-    state = server.refresh()
-    assert isinstance(state['task_message'], str)
+    update = server.refresh()
+    assert isinstance(update['data']['task_message'], str)
 
 
 def test_probe(server):
@@ -92,4 +97,4 @@ def test_reset_ports(server):
     assert server.robot.left_probe_request.char_value == '0' * 96
     assert server.robot.middle_probe_request.char_value == '0' * 96
     assert server.robot.right_probe_request.char_value == '1' * 96
-    assert server.robot.generic_command.char_value == 'ResetPorts'
+    assert server.robot.generic_command.char_value == 'ResetCassettePorts'

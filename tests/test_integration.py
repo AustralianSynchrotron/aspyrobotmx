@@ -10,6 +10,9 @@ from aspyrobotmx import RobotClientMX, RobotServerMX
 from aspyrobot.server import foreground_operation, query_operation
 
 
+UPDATE_ADDR = 'tcp://127.0.0.1:3000'
+REQUEST_ADDR = 'tcp://127.0.0.1:3001'
+
 handle = 1
 
 
@@ -17,7 +20,9 @@ handle = 1
 def server():
     robot = MagicMock()
     robot.snapshot.return_value = {}
-    server = RobotServerMX(robot=robot, logger=MagicMock())
+    server = RobotServerMX(robot=robot, logger=MagicMock(),
+                           update_addr=UPDATE_ADDR,
+                           request_addr=REQUEST_ADDR)
     server.setup()
     yield server
     server.shutdown()
@@ -26,7 +31,7 @@ def server():
 
 @pytest.fixture
 def client():
-    client = RobotClientMX()
+    client = RobotClientMX(update_addr=UPDATE_ADDR, request_addr=REQUEST_ADDR)
     client.setup()
     return client
 

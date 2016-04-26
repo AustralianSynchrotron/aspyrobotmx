@@ -16,10 +16,12 @@ class RobotClientMX(RobotClient):
         return self.run_operation('calibrate', target=target, run_args=run_args,
                                   callback=callback)
 
-    def set_port_state(self, position, column, port, state, callback=None):
-        return self.run_operation('set_port_state', position=position,
-                                  column=column, port=port, state=state,
-                                  callback=callback)
+    def reset_ports(self, ports, callback=None):
+        """
+        ports: dictionary with keys: 'left', 'middle', 'right' and values
+            the ports to reset in each position
+        """
+        return self.run_operation('reset_ports', ports=ports, callback=callback)
 
     def set_holder_type(self, position, type, callback=None):
         return self.run_operation('set_holder_type', position=position,

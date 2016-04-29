@@ -1,5 +1,3 @@
-import time
-
 import pytest
 import epics
 
@@ -59,7 +57,7 @@ def test_probe_when_busy(server):
 
 
 def test_calibrate_invalid_target(server):
-    result = server.calibrate(handle, 'blah', '1 0')
+    server.calibrate(handle, 'blah', '1 0')
     end_update = list(operation_updates(server))[-1]
     assert end_update['error'] is not None
 

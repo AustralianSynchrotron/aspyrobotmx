@@ -1,5 +1,4 @@
 import pytest
-import epics
 
 from aspyrobotmx.server import (RobotServerMX,
                                 HOLDER_TYPE_CALIBRATION_CASSETTE,

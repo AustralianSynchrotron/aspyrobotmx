@@ -234,6 +234,8 @@ class RobotServerMX(RobotServer):
         self.logger.info('prepare_for_dismount: %r %r %r', position, column, port)
         port_code = '{} {} {}'.format(position[0], column, port).upper()
         message = self.robot.run_foreground_operation('DismountSample', port_code)
+        self.logger.info('message: %r', message)
+        return message
 
     # ******************************************************************
     # ********************* Helper methods *****************************

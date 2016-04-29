@@ -1,13 +1,9 @@
-from threading import Thread
-from types import MethodType
 import time
 
 import pytest
 from mock import MagicMock
-import epics
 
 from aspyrobotmx import RobotClientMX, RobotServerMX
-from aspyrobot.server import foreground_operation, query_operation
 
 
 UPDATE_ADDR = 'tcp://127.0.0.1:3000'

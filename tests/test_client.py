@@ -1,6 +1,8 @@
-from aspyrobotmx import RobotClientMX
-from mock import MagicMock, call
+from unittest.mock import MagicMock, call
+
 import pytest
+
+from aspyrobotmx import RobotClientMX
 
 
 UPDATE_ADDR = 'tcp://127.0.0.1:3000'

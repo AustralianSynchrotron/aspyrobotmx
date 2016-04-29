@@ -62,7 +62,16 @@ class ServerAttr(object):
 
 
 class RobotServerMX(RobotServer):
+    """
+    A subclass of aspyrobot.RobotServer with extra functionality for the
+    sample mounting robots at the MX beamlines of the Australian Synchrotron.
 
+    Args:
+        robot (RobotMX): An instance of RobotMX to enable communication with the
+            robot EPICS IOC.
+        **kwargs: Extra keyword parameters to be passed to RobotServer.
+
+    """
     pins_mounted = ServerAttr('pins_mounted', 0)
     pins_lost = ServerAttr('pins_lost', 0)
     sample_locations = ServerAttr('sample_locations', {

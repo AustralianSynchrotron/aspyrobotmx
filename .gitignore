@@ -3,3 +3,4 @@ O.Common/
 bin/
 dbd/
 envPaths
+docs/_build/

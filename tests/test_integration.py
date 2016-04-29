@@ -1,7 +1,7 @@
 import time
+from unittest.mock import MagicMock
 
 import pytest
-from mock import MagicMock
 
 from aspyrobotmx import RobotClientMX, RobotServerMX
 

@@ -19,7 +19,8 @@ def client():
 def test_probe(client):
     ports = {'left': [1, 0]}
     client.probe(ports)
-    assert client.run_operation.call_args == call('probe', ports=ports, callback=None)
+    assert client.run_operation.call_args == call('probe', ports=ports,
+                                                  callback=None)
 
 
 def test_calibrate(client):
@@ -30,12 +31,25 @@ def test_calibrate(client):
 
 def test_set_gripper(client):
     client.set_gripper(1)
-    assert client.run_operation.call_args == call('set_gripper', value=1, callback=None)
+    assert client.run_operation.call_args == call('set_gripper', value=1,
+                                                  callback=None)
 
 
 def test_set_lid(client):
     client.set_lid(1)
     assert client.run_operation.call_args == call('set_lid', value=1, callback=None)
+
+
+def test_set_heater(client):
+    client.set_heater(1)
+    assert client.run_operation.call_args == call('set_heater',
+                                                  value=1, callback=None)
+
+
+def test_set_heater_air(client):
+    client.set_heater_air(1)
+    assert client.run_operation.call_args == call('set_heater_air',
+                                                  value=1, callback=None)
 
 
 def test_set_holder_type(client):

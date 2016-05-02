@@ -14,5 +14,8 @@ class RobotMX(Robot):
         'middle_probe_request': 'PROBEMIDDLEREQUEST_CMD',
         'right_probe_request': 'PROBERIGHTREQUEST_CMD',
         'ln2_level': 'LN2LEVEL_STATUS',
+        'heater_hot': 'HEATER_STATUS',
+        'heater_command': 'HEATER_CMD',
+        'heater_air_command': 'DRYAIR_CMD',
     })
     attrs_r = {v: k for k, v in attrs.items()}

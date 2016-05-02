@@ -4,12 +4,26 @@ from aspyrobot import RobotClient
 class RobotClientMX(RobotClient):
     """
     Attributes:
+        task_message (str): Messages about current foreground task
+        task_progress (str): Current task progress
+        model (str): Model of the robot
+        time (str): Time on robot controller (can be used as a heartbeat monitor)
+        at_home (int): Whether the robot is in the home position
+        motors_on (int): Whether the robot motors are on
+        motors_on_command (int): Value of motors on instruction
+        toolset (codes.Toolset): Current toolset the robot is in
+        foreground_done (int): Whether the foreground is available
+        safety_gate (int): Is the safety gate open
+        closest_point (int): Closest labelled point to the robot's coordinates
         lid_open (int): Dewar lid open status
         lid_closed (int): Dewar lid closed status
         lid_command (int): Value of lid open command
-        gripper_open (int):  Gripper open status
+        gripper_open (int): Gripper open status
         gripper_closed (int): Gripper closed status
         gripper_command (int): Value of close gripper command
+        heater_hot (int): Is the robot heater hot
+        heater_command (int): Value of heater on/off request
+        heater_air_command (int): Value of heater air on/off request
         ln2_level (int): Is the LN2 high flag set
         pins_mounted (int): Number of pins mounted
         pins_lost (int): Number of pins lost
@@ -72,6 +86,28 @@ class RobotClientMX(RobotClient):
 
         """
         return self.run_operation('set_lid', value=value, callback=callback)
+
+    def set_heater(self, value, callback=None):
+        """
+        Set heater on or off.
+
+        Args:
+            value (int): 1 for on, 0 for off
+            callback: Callback function to receive operation state updates
+
+        """
+        return self.run_operation('set_heater', value=value, callback=callback)
+
+    def set_heater_air(self, value, callback=None):
+        """
+        Set heater air on or off.
+
+        Args:
+            value (int): 1 for on, 0 for off
+            callback: Callback function to receive operation state updates
+
+        """
+        return self.run_operation('set_heater_air', value=value, callback=callback)
 
     def calibrate(self, target, run_args, callback=None):
         """

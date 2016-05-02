@@ -143,6 +143,14 @@ class RobotServerMX(RobotServer):
     def set_lid(self, handle, value):
         self.robot.lid_command.put(value)
 
+    @background_operation
+    def set_heater(self, handle, value):
+        self.robot.heater_command.put(value)
+
+    @background_operation
+    def set_heater_air(self, handle, value):
+        self.robot.heater_air_command.put(value)
+
     @foreground_operation
     def calibrate(self, handle, target, run_args):
         # TODO: Validate args

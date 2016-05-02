@@ -20,6 +20,8 @@ def server():
     server.robot.left_probe_request.put(b'\0')
     server.robot.middle_probe_request.put(b'\0')
     server.robot.right_probe_request.put(b'\0')
+    server.robot.heater_command.put(0)
+    server.robot.heater_air_command.put(0)
     epics.poll(.1)
     yield server
 
@@ -96,3 +98,15 @@ def test_reset_ports(server):
     assert server.robot.middle_probe_request.char_value == '0' * 96
     assert server.robot.right_probe_request.char_value == '1' * 96
     assert server.robot.generic_command.char_value == 'ResetCassettePorts'
+
+
+def test_set_heater(server):
+    server.set_heater(handle, 1)
+    epics.poll(.1)
+    assert server.robot.heater_command.value == 1
+
+
+def test_set_heater_air(server):
+    server.set_heater_air(handle, 1)
+    epics.poll(.1)
+    assert server.robot.heater_air_command.value == 1

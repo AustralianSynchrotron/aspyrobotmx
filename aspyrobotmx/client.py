@@ -2,7 +2,43 @@ from aspyrobot import RobotClient
 
 
 class RobotClientMX(RobotClient):
+    """
+    Attributes:
+        lid_open (int): Dewar lid open status
+        lid_closed (int): Dewar lid closed status
+        lid_command (int): Value of lid open command
+        gripper_open (int):  Gripper open status
+        gripper_closed (int): Gripper closed status
+        gripper_command (int): Value of close gripper command
+        ln2_level (int): Is the LN2 high flag set
+        pins_mounted (int): Number of pins mounted
+        pins_lost (int): Number of pins lost
+        dumbbell_state (codes.DumbellState): Status of the dumbbell
+        last_toolset_calibration (str): Timestamp of last toolset calibration
+        last_left_calibration (str): Timestamp of last left position calibration
+        last_middle_calibration (str): Timestamp of last middle position calibration
+        last_right_calibration (str): Timestamp of last right position calibration
+        last_goniometer_calibration (str): Timestamp of last goni calibration
+        holder_types (dict):
+            * keys (str): `'left'`, `'middle'`, `'right'`
+            * values (codes.HolderType): Type of sample holder in position
+        height_errors (dict):
+            * keys (str): `'left'`, `'middle'`, `'right'`
+            * values (float): height error of cassette
+        puck_states (dict):
+            * keys (str): `'left'`, `'middle'`, `'right'`
+            * values (dict): Dict of puck names (eg `'A'`) to `codes.PuckState`\ s
+        port_states (dict):
+            * keys (str): `'left'`, `'middle'`, `'right'`
+            * values (list): 96 element list of `codes.PortState` values
+        port_distance (dict):
+            * keys (str): `'left'`, `'middle'`, `'right'`
+            * values (list): 96 element list of `float` values
+        sample_locations (dict):
+            * keys (str): `'cavity'`, `'picker`', `'placer'`, `'goniometer'`
+            * values (list): `[position, port_index]` of sample at location
 
+    """
     def probe(self, ports, callback=None):
         """
         Probe the sample holder ports.

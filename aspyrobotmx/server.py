@@ -79,7 +79,7 @@ class RobotServerMX(RobotServer):
         self.fetch_all_data()
 
     def fetch_all_data(self):
-        self.robot.run_args.put('PSDC LMR')
+        self.robot.task_args.put('PSDC LMR')
         poll(DELAY_TO_PROCESS)
         self.robot.generic_command.put('JSONDataRequest')
 
@@ -152,9 +152,9 @@ class RobotServerMX(RobotServer):
         self.robot.heater_air_command.put(value)
 
     @foreground_operation
-    def calibrate(self, handle, target, run_args):
+    def calibrate(self, handle, target, task_args):
         # TODO: Validate args
-        self.logger.debug('calibrate target: %r, run_args: %r', target, run_args)
+        self.logger.debug('calibrate target: %r, task_args: %r', target, task_args)
         if target == 'toolset':
             cmd = 'VB_MagnetCal'
         elif target == 'cassette':
@@ -163,7 +163,7 @@ class RobotServerMX(RobotServer):
             cmd = 'VB_GonioCal'
         else:
             raise RobotError('invalid target for calibration')
-        message = self.robot.run_foreground_operation(cmd, run_args)
+        message = self.robot.run_task(cmd, task_args)
         self.logger.info('calibrate message: %r', message)
         return message
 
@@ -173,7 +173,7 @@ class RobotServerMX(RobotServer):
         self.logger.debug('probe ports: %r', ports)
         self.set_probe_requests(ports)
         poll(DELAY_TO_PROCESS)
-        message = self.robot.run_foreground_operation('ProbeCassettes')
+        message = self.robot.run_task('ProbeCassettes')
         self.logger.info('probe message: %r', message)
         return message
 
@@ -191,7 +191,7 @@ class RobotServerMX(RobotServer):
     def set_port_state(self, handle, position, column, port, state):
         self.logger.error('%r %r %r %r', position, column, port, state)
         args = '{} {} {} {}'.format(position[0], column, port, state).upper()
-        message = self.robot.run_foreground_operation('SetPortState', args)
+        message = self.robot.run_task('SetPortState', args)
         self.logger.info('message: %r', message)
         return message
 
@@ -199,14 +199,14 @@ class RobotServerMX(RobotServer):
     def reset_ports(self, handle, ports):
         self.set_probe_requests(ports)
         poll(DELAY_TO_PROCESS)
-        message = self.robot.run_foreground_operation('ResetCassettePorts')
+        message = self.robot.run_task('ResetCassettePorts')
         self.logger.info('message: %r', message)
         return message
 
     @foreground_operation
     def prepare_for_mount(self, handle):
         self.logger.info('prepare_for_mount')
-        message = self.robot.run_foreground_operation('PrepareForMountDismount')
+        message = self.robot.run_task('PrepareForMountDismount')
         self.logger.info('message: %r', message)
         return message
 
@@ -215,7 +215,7 @@ class RobotServerMX(RobotServer):
         self.logger.info('mount: %r %r %r', position, column, port)
         port_code = '{} {} {}'.format(position[0], column, port).upper()
         spel_operation = 'MountSamplePortAndGoHome'
-        message = self.robot.run_foreground_operation(spel_operation, port_code)
+        message = self.robot.run_task(spel_operation, port_code)
         self.logger.info('message: %r', message)
         return message
 
@@ -223,7 +223,7 @@ class RobotServerMX(RobotServer):
     def dismount(self, handle, position, column, port):
         self.logger.info('prepare_for_dismount: %r %r %r', position, column, port)
         port_code = '{} {} {}'.format(position[0], column, port).upper()
-        message = self.robot.run_foreground_operation('DismountSample', port_code)
+        message = self.robot.run_task('DismountSample', port_code)
         self.logger.info('message: %r', message)
         return message
 

@@ -4,8 +4,10 @@ from aspyrobot import RobotClient
 class RobotClientMX(RobotClient):
     """
     Attributes:
+        current_task (str): Current task being executed on the robot
         task_message (str): Messages about current foreground task
         task_progress (str): Current task progress
+        status (int): Status flag of the robot: bitwise or of codes.RobotStatus
         model (str): Model of the robot
         time (str): Time on robot controller (can be used as a heartbeat monitor)
         at_home (int): Whether the robot is in the home position
@@ -27,7 +29,7 @@ class RobotClientMX(RobotClient):
         ln2_level (int): Is the LN2 high flag set
         pins_mounted (int): Number of pins mounted
         pins_lost (int): Number of pins lost
-        dumbbell_state (codes.DumbellState): Status of the dumbbell
+        dumbbell_state (codes.DumbbellState): Status of the dumbbell
         last_toolset_calibration (str): Timestamp of last toolset calibration
         last_left_calibration (str): Timestamp of last left position calibration
         last_middle_calibration (str): Timestamp of last middle position calibration
@@ -109,17 +111,17 @@ class RobotClientMX(RobotClient):
         """
         return self.run_operation('set_heater_air', value=value, callback=callback)
 
-    def calibrate(self, target, run_args, callback=None):
+    def calibrate(self, target, task_args, callback=None):
         """
         Calibrate the robot points.
 
         Args:
             target: 'toolset', 'cassette' or 'goniometer'
-            run_args: Arguments for the calibration function
+            task_args: Arguments for the calibration function
             callback: Callback function to receive operation state updates
 
         """
-        return self.run_operation('calibrate', target=target, run_args=run_args,
+        return self.run_operation('calibrate', target=target, task_args=task_args,
                                   callback=callback)
 
     def reset_ports(self, ports, callback=None):

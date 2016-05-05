@@ -26,7 +26,7 @@ def test_probe(client):
 def test_calibrate(client):
     client.calibrate('toolset', '1 0')
     assert client.run_operation.call_args == call('calibrate', target='toolset',
-                                                  run_args='1 0', callback=None)
+                                                  task_args='1 0', callback=None)
 
 
 def test_set_gripper(client):

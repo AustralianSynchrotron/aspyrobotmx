@@ -15,10 +15,23 @@ def server():
 
 
 def test_update_cassette_type(server):
+    server.puck_states['left'] = {puck: PuckState.full for puck in 'ABCD'}
     server.update_cassette_type(value='calibration', position='left',
                                 min_height_error=0.123)
     assert server.holder_types['left'] == HolderType.calibration
+    assert server.puck_states['left']['A'] == PuckState.full
     assert 'holder_types' in server.publish_queue.get_nowait()['data']
+
+
+def test_update_cassette_type_to_unknown_clears_all_data(server):
+    server.puck_states['left'] = {puck: PuckState.full for puck in 'ABCD'}
+    server.port_states['left'] = [PortState.full] * 96
+    server.update_cassette_type(value='unknown', position='left')
+    assert server.puck_states['left']['A'] == PuckState.unknown
+    assert server.port_states['left'][0] == PortState.unknown
+    update_data = server.publish_queue.get_nowait()['data']
+    assert 'puck_states' in update_data
+    assert 'port_states' in update_data
 
 
 def test_update_puck_states(server):

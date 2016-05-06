@@ -110,3 +110,10 @@ def test_set_heater_air(server):
     server.set_heater_air(handle, 1)
     epics.poll(.1)
     assert server.robot.heater_air_command.value == 1
+
+
+def test_reset_holders(server):
+    server.reset_holders(handle, ['left', 'right'])
+    epics.poll(.1)
+    assert server.robot.task_args.char_value == 'LR'
+    assert server.robot.generic_command.char_value == 'ResetCassettes'

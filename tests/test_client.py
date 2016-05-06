@@ -52,8 +52,8 @@ def test_set_heater_air(client):
                                                   value=1, callback=None)
 
 
-def test_set_holder_type(client):
-    client.set_holder_type('left', 0)
-    assert client.run_operation.call_args == call('set_holder_type',
-                                                  position='left', type=0,
+def test_reset_holders(client):
+    client.reset_holders(['left', 'right'])
+    assert client.run_operation.call_args == call('reset_holders',
+                                                  positions=['left', 'right'],
                                                   callback=None)

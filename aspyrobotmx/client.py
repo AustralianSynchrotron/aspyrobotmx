@@ -124,6 +124,18 @@ class RobotClientMX(RobotClient):
         return self.run_operation('calibrate', target=target, task_args=task_args,
                                   callback=callback)
 
+    def reset_holders(self, positions, callback=None):
+        """
+        Clear the holder type and port information for the given dewar positions.
+
+        Args:
+            positions: list of dewar positions: 'left', 'middle', 'right'
+            callback: Callback function to receive operation state updates
+
+        """
+        return self.run_operation('reset_holders', positions=positions,
+                                  callback=callback)
+
     def reset_ports(self, ports, callback=None):
         """
         Clear the probe data for specific ports.
@@ -135,19 +147,6 @@ class RobotClientMX(RobotClient):
 
         """
         return self.run_operation('reset_ports', ports=ports, callback=callback)
-
-    def set_holder_type(self, position, type, callback=None):
-        """
-        Set the holder type in a dewar position.
-
-        Args:
-            position: 'left', 'middle', 'right'
-            type: 'unknown', 'calibration', 'normal', 'superpuck'
-            callback: Callback function to receive operation state updates
-
-        """
-        return self.run_operation('set_holder_type', position=position,
-                                  type=type, callback=callback)
 
     def prepare_for_mount(self, callback=None):
         """

@@ -183,17 +183,17 @@ class RobotServerMX(RobotServer):
         self.pins_lost = 0
 
     @background_operation
-    def set_holder_type(self, handle, position, type):
-        # TODO: Should call SPEL function
-        pass
-
-    @background_operation
     def set_port_state(self, handle, position, column, port, state):
         self.logger.error('%r %r %r %r', position, column, port, state)
         args = '{} {} {} {}'.format(position[0], column, port, state).upper()
         message = self.robot.run_task('SetPortState', args)
         self.logger.info('message: %r', message)
         return message
+
+    @background_operation
+    def reset_holders(self, handle, positions):
+        task_args = ''.join(position[0].upper() for position in positions)
+        self.robot.run_task('ResetCassettes', task_args)
 
     @background_operation
     def reset_ports(self, handle, ports):

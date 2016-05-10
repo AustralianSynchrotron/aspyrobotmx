@@ -234,6 +234,13 @@ class RobotServerMX(RobotServer):
         self.logger.info('message: %r', message)
         return message
 
+    @background_operation
+    def set_sample_state(self, handle, position, column, port, state):
+        self.logger.info('set_sample_state: %r %r %r %r',
+                         position, column, port, state)
+        port_code = '{} {} {} {}'.format(position[0], column, port, state).upper()
+        self.robot.run_background_task('SetSampleStatus', port_code)
+
     # ******************************************************************
     # ********************* Helper methods *****************************
     # ******************************************************************

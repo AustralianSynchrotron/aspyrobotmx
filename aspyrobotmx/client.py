@@ -185,3 +185,19 @@ class RobotClientMX(RobotClient):
         """
         return self.run_operation('dismount', position=position, column=column,
                                   port=port, callback=callback)
+
+    def set_sample_state(self, position, column, port, state, callback=None):
+        """
+        Set which pin is currently mounted on the goniometer.
+
+        Args:
+            position: 'left', 'middle', 'right'
+            column: 'A', 'B', ..., 'L'
+            port: 1-16
+            state (codes.SampleState): sample state integer
+            callback: Callback function to receive operation state updates
+
+        """
+        return self.run_operation('set_sample_state', position=position,
+                                  column=column, port=port, state=state,
+                                  callback=callback)

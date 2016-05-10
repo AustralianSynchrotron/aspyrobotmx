@@ -53,6 +53,13 @@ class PuckState(IntEnum):
     empty = 1
     error = 2
 
+class SampleState(IntEnum):
+    unknown = 0
+    cassette = 1
+    picker = 2
+    placer = 3
+    cavity = 4
+    goniometer = 5
 
 class RobotStatus(IntEnum):
     need_all = 0x0000007f

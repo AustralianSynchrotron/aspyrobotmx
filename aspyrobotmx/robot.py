@@ -17,5 +17,10 @@ class RobotMX(Robot):
         'heater_hot': 'HEATER_STATUS',
         'heater_command': 'HEATER_CMD',
         'heater_air_command': 'DRYAIR_CMD',
+        'last_toolset_calibration': 'TCTS_MON',
+        'last_left_calibration': 'LCCTS_MON',
+        'last_middle_calibration': 'MCCTS_MON',
+        'last_right_calibration': 'RCCTS_MON',
+        'last_goniometer_calibration': 'GCTS_MON',
     })
     attrs_r = {v: k for k, v in attrs.items()}

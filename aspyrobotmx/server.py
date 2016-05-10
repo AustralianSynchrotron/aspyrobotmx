@@ -47,11 +47,6 @@ class RobotServerMX(RobotServer):
         'cavity': None, 'picker': None, 'placer': None, 'goniometer': None
     })
     dumbbell_state = ServerAttr('dumbbell_state')
-    last_toolset_calibration = ServerAttr('last_toolset_calibration')
-    last_left_calibration = ServerAttr('last_left_calibration')
-    last_middle_calibration = ServerAttr('last_middle_calibration')
-    last_right_calibration = ServerAttr('last_right_calibration')
-    last_goniometer_calibration = ServerAttr('last_goniometer_calibration')
 
     def __init__(self, robot, **kwargs):
         super(RobotServerMX, self).__init__(robot, **kwargs)

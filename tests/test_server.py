@@ -123,5 +123,5 @@ def test_reset_holders(server):
 def test_set_sample_state(server):
     server.set_mounted(handle, 'left', 'A', 1, SampleState.goniometer)
     epics.poll(.1)
-    assert server.robot.task_args.char_value == 'L A 1 5'
+    assert server.robot.task_args.char_value == 'LA1 goniometer'
     assert server.robot.generic_command.char_value == 'SetSampleStatus'

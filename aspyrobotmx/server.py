@@ -1,10 +1,12 @@
 from itertools import repeat
+from threading import Event
 
 from aspyrobot import RobotServer
 from aspyrobot.server import (foreground_operation, background_operation,
                               query_operation)
 from aspyrobot.exceptions import RobotError
 from epics import poll
+from epics.ca import CAThread
 
 from .codes import HolderType, PuckState, PortState, SampleState
 
@@ -13,6 +15,7 @@ POSITIONS = ['left', 'middle', 'right']
 SLOTS = ['A', 'B', 'C', 'D']
 PORTS_PER_POSITION = 96
 DELAY_TO_PROCESS = .5
+PREPARE_TIMEOUT = 120
 
 
 class ServerAttr(object):
@@ -68,6 +71,7 @@ class RobotServerMX(RobotServer):
             'middle': list(repeat(None, PORTS_PER_POSITION)),
             'right': list(repeat(None, PORTS_PER_POSITION)),
         }
+        self.abort_prepare_timeout = Event()
 
     def setup(self):
         super(RobotServerMX, self).setup()
@@ -215,11 +219,13 @@ class RobotServerMX(RobotServer):
         self.logger.info('prepare_for_mount')
         message = self.robot.run_task('PrepareForMountDismount')
         self.logger.info('message: %r', message)
+        self.start_prepare_timeout(PREPARE_TIMEOUT)
         return message
 
     @foreground_operation
     def mount(self, handle, position, column, port):
         self.logger.info('mount: %r %r %r', position, column, port)
+        self.abort_prepare_timeout.set()
         port_code = '{} {} {}'.format(position[0], column, port).upper()
         spel_operation = 'MountSamplePortAndGoHome'
         message = self.robot.run_task(spel_operation, port_code)
@@ -229,6 +235,7 @@ class RobotServerMX(RobotServer):
     @foreground_operation
     def dismount(self, handle, position, column, port):
         self.logger.info('prepare_for_dismount: %r %r %r', position, column, port)
+        self.abort_prepare_timeout.set()
         port_code = '{} {} {}'.format(position[0], column, port).upper()
         message = self.robot.run_task('DismountSample', port_code)
         self.logger.info('message: %r', message)
@@ -246,6 +253,15 @@ class RobotServerMX(RobotServer):
     # ******************************************************************
     # ********************* Helper methods *****************************
     # ******************************************************************
+
+    def start_prepare_timeout(self, timeout):
+        self.abort_prepare_timeout.clear()
+        thread = CAThread(target=self.prepare_timeout, args=(timeout,), daemon=True)
+        thread.start()
+
+    def prepare_timeout(self, timeout):
+        if not self.abort_prepare_timeout.wait(timeout):
+            self.robot.run_task('GoHomeDueToError')
 
     def set_probe_requests(self, ports):
         for position in ['left', 'middle', 'right']:

@@ -1,5 +1,4 @@
-O.linux-x86/
-O.Common/
+O.*
 bin/
 dbd/
 envPaths

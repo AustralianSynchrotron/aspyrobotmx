@@ -1,3 +1,6 @@
+from unittest.mock import MagicMock, call
+from time import sleep
+
 import pytest
 import epics
 
@@ -8,7 +11,7 @@ from aspyrobotmx import RobotMX
 UPDATE_ADDR = 'tcp://127.0.0.1:3000'
 REQUEST_ADDR = 'tcp://127.0.0.1:3001'
 
-handle = 1
+HANDLE = 1
 
 
 def process():
@@ -28,18 +31,44 @@ def server():
 
 
 def test_mount_sends_the_mount_command(server):
-    server.robot.closest_point.put(3)
-    process()
-    server.mount(handle, 'left', 'A', '1')
+    server.mount(HANDLE, 'left', 'A', '1')
     process()
     assert server.robot.task_args.char_value == 'L A 1'
     assert server.robot.generic_command.char_value == 'MountSamplePortAndGoHome'
 
 
 def test_dismount_sends_the_dismount_command(server):
-    server.robot.closest_point.put(3)
-    process()
-    server.dismount(handle, 'left', 'A', '1')
+    server.dismount(HANDLE, 'left', 'A', '1')
     process()
     assert server.robot.task_args.char_value == 'L A 1'
     assert server.robot.generic_command.char_value == 'DismountSample'
+
+
+def test_prepare_for_mount_starts_timeout_thread(server):
+    server.start_prepare_timeout = MagicMock()
+    server.robot.run_task = MagicMock(return_value='ok')
+    server.prepare_for_mount(HANDLE)
+    assert server.start_prepare_timeout.called is True
+
+
+def test_start_prepare_timeout_should_reset_timeout_and_launch_thread(server):
+    server.abort_prepare_timeout.set()
+    server.prepare_timeout = MagicMock()
+    server.start_prepare_timeout(120)
+    sleep(.01)
+    assert server.abort_prepare_timeout.is_set() is False
+    assert server.prepare_timeout.call_args == call(120)
+
+
+def test_prepare_timeout_should_start_error_task_if_timeout_runs_out(server):
+    server.robot.run_task = MagicMock(return_value='ok')
+    server.start_prepare_timeout(1)
+    sleep(1.1)
+    assert server.robot.run_task.call_args == call('GoHomeDueToError')
+
+def test_prepare_timeout_should_cancel_if_abort_event_is_set(server):
+    server.robot.run_task = MagicMock(return_value='ok')
+    server.start_prepare_timeout(1)
+    server.abort_prepare_timeout.set()
+    sleep(1.1)
+    assert server.robot.run_task.called is False

@@ -71,7 +71,8 @@ class RobotServerMX(RobotServer):
             'middle': list(repeat(None, PORTS_PER_POSITION)),
             'right': list(repeat(None, PORTS_PER_POSITION)),
         }
-        self.abort_prepare_timeout = Event()
+        self._abort_prepare_timeout = Event()
+        self._prepared_for_mount = False
 
     def setup(self):
         super(RobotServerMX, self).setup()
@@ -219,13 +220,16 @@ class RobotServerMX(RobotServer):
         self.logger.info('prepare_for_mount')
         message = self.robot.run_task('PrepareForMountDismount')
         self.logger.info('message: %r', message)
-        self.start_prepare_timeout(PREPARE_TIMEOUT)
+        self._prepared_for_mount = True
+        self._start_prepare_timeout(PREPARE_TIMEOUT)
         return message
 
     @foreground_operation
     def mount(self, handle, position, column, port):
         self.logger.info('mount: %r %r %r', position, column, port)
-        self.abort_prepare_timeout.set()
+        if not self._prepared_for_mount:
+            raise RobotError('run prepare_for_mount first')
+        self._abort_prepare_timeout.set()
         port_code = '{} {} {}'.format(position[0], column, port).upper()
         spel_operation = 'MountSamplePortAndGoHome'
         message = self.robot.run_task(spel_operation, port_code)
@@ -235,7 +239,9 @@ class RobotServerMX(RobotServer):
     @foreground_operation
     def dismount(self, handle, position, column, port):
         self.logger.info('prepare_for_dismount: %r %r %r', position, column, port)
-        self.abort_prepare_timeout.set()
+        if not self._prepared_for_mount:
+            raise RobotError('run prepare_for_mount first')
+        self._abort_prepare_timeout.set()
         port_code = '{} {} {}'.format(position[0], column, port).upper()
         message = self.robot.run_task('DismountSample', port_code)
         self.logger.info('message: %r', message)
@@ -254,14 +260,18 @@ class RobotServerMX(RobotServer):
     # ********************* Helper methods *****************************
     # ******************************************************************
 
-    def start_prepare_timeout(self, timeout):
-        self.abort_prepare_timeout.clear()
-        thread = CAThread(target=self.prepare_timeout, args=(timeout,), daemon=True)
-        thread.start()
+    def _start_prepare_timeout(self, timeout):
+        self._abort_prepare_timeout.clear()
+        CAThread(target=self._prepare_timeout, args=(timeout,), daemon=True).start()
 
-    def prepare_timeout(self, timeout):
-        if not self.abort_prepare_timeout.wait(timeout):
+    def _prepare_timeout(self, timeout):
+        self.logger.debug('waiting %s seconds for next operation to start', timeout)
+        if not self._abort_prepare_timeout.wait(timeout):
+            self._prepared_for_mount = False
+            self.logger.warning('timed out at cooling point. going home')
             self.robot.run_task('GoHomeDueToError')
+        else:
+            self.logger.debug('operation detected. timeout aborted')
 
     def set_probe_requests(self, ports):
         for position in ['left', 'middle', 'right']:

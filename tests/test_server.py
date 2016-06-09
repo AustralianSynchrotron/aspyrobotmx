@@ -81,7 +81,7 @@ def test_fetch_all_data(server):
     server.fetch_all_data()
     epics.poll(.1)
     assert server.robot.task_args.char_value == 'PSDC LMR'
-    assert server.robot.generic_command.char_value == 'JSONDataRequest'
+    assert server.robot.generic_command.char_value == 'DataRequest'
 
 
 def test_set_port_state_can_set_single_ports_to_error(server):

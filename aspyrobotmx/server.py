@@ -81,7 +81,7 @@ class RobotServerMX(RobotServer):
     def fetch_all_data(self):
         self.robot.task_args.put('PSDC LMR')
         poll(DELAY_TO_PROCESS)
-        self.robot.generic_command.put('JSONDataRequest')
+        self.robot.generic_command.put('DataRequest')
 
     # ******************************************************************
     # ************************ Updates ******************************

@@ -50,6 +50,7 @@ class RobotServerMX(RobotServer):
         'cavity': None, 'picker': None, 'placer': None, 'goniometer': None
     })
     dumbbell_state = ServerAttr('dumbbell_state')
+    mount_message = ServerAttr('mount_message', default='')
 
     def __init__(self, robot, **kwargs):
         super(RobotServerMX, self).__init__(robot, **kwargs)
@@ -130,6 +131,9 @@ class RobotServerMX(RobotServer):
 
     def update_magnet_state(self, value, **_):
         self.dumbbell_state = value
+
+    def update_mount_message(self, value, **_):
+        self.mount_message = value
 
     # ******************************************************************
     # ************************ Operations ******************************

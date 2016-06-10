@@ -53,6 +53,7 @@ class RobotClientMX(RobotClient):
         sample_locations (dict):
             * keys (str): `'cavity'`, `'picker`', `'placer'`, `'goniometer'`
             * values (list): `[position, port_index]` of sample at location
+        mount_message (str): Mount progress message
 
     """
     def probe(self, ports, callback=None):

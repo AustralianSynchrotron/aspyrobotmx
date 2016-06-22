@@ -252,6 +252,12 @@ class RobotServerMX(RobotServer):
         return message
 
     @background_operation
+    def inspected(self, handle):
+        message = self.robot.run_task('Inspected')
+        self.logger.info('message: %r', message)
+        return message
+
+    @background_operation
     def set_sample_state(self, handle, position, column, port, state):
         self.logger.info('set_sample_state: %r %r %r %r',
                          position, column, port, state)

@@ -57,8 +57,7 @@ class RobotClientMX(RobotClient):
 
     """
     def probe(self, ports, callback=None):
-        """
-        Probe the sample holder ports.
+        """Probe the sample holder ports.
 
         Args:
             ports: Dictionary with keys: 'left', 'middle', 'right' and values
@@ -69,8 +68,7 @@ class RobotClientMX(RobotClient):
         return self.run_operation('probe', ports=ports, callback=callback)
 
     def set_gripper(self, value, callback=None):
-        """
-        Set gripper close state.
+        """Set gripper close state.
 
         Args:
             value: 0 or 1
@@ -80,8 +78,7 @@ class RobotClientMX(RobotClient):
         return self.run_operation('set_gripper', value=value, callback=callback)
 
     def set_lid(self, value, callback=None):
-        """
-        Set lid open state.
+        """Set lid open state.
 
         Args:
             value: 0 or 1
@@ -91,8 +88,7 @@ class RobotClientMX(RobotClient):
         return self.run_operation('set_lid', value=value, callback=callback)
 
     def set_heater(self, value, callback=None):
-        """
-        Set heater on or off.
+        """Set heater on or off.
 
         Args:
             value (int): 1 for on, 0 for off
@@ -102,8 +98,7 @@ class RobotClientMX(RobotClient):
         return self.run_operation('set_heater', value=value, callback=callback)
 
     def set_heater_air(self, value, callback=None):
-        """
-        Set heater air on or off.
+        """Set heater air on or off.
 
         Args:
             value (int): 1 for on, 0 for off
@@ -113,8 +108,7 @@ class RobotClientMX(RobotClient):
         return self.run_operation('set_heater_air', value=value, callback=callback)
 
     def calibrate(self, target, task_args, callback=None):
-        """
-        Calibrate the robot points.
+        """Calibrate the robot points.
 
         Args:
             target: 'toolset', 'cassette' or 'goniometer'
@@ -126,8 +120,7 @@ class RobotClientMX(RobotClient):
                                   callback=callback)
 
     def reset_holders(self, positions, callback=None):
-        """
-        Clear the holder type and port information for the given dewar positions.
+        """Clear the holder type and port information for the given dewar positions.
 
         Args:
             positions: list of dewar positions: 'left', 'middle', 'right'
@@ -138,8 +131,7 @@ class RobotClientMX(RobotClient):
                                   callback=callback)
 
     def reset_ports(self, ports, callback=None):
-        """
-        Clear the probe data for specific ports.
+        """Clear the probe data for specific ports.
 
         Args:
             ports: dictionary with keys: 'left', 'middle', 'right' and values
@@ -150,8 +142,7 @@ class RobotClientMX(RobotClient):
         return self.run_operation('reset_ports', ports=ports, callback=callback)
 
     def prepare_for_mount(self, callback=None):
-        """
-        Move the robot to the cooling point.
+        """Move the robot to the cooling point.
 
         Args:
             callback: Callback function to receive operation state updates
@@ -160,8 +151,7 @@ class RobotClientMX(RobotClient):
         return self.run_operation('prepare_for_mount', callback=callback)
 
     def mount(self, position, column, port, callback=None):
-        """
-        Mount a sample.
+        """Mount a sample.
 
         Args:
             position: 'left', 'middle', 'right'
@@ -174,8 +164,7 @@ class RobotClientMX(RobotClient):
                                   port=port, callback=callback)
 
     def dismount(self, position, column, port, callback=None):
-        """
-        Dismount a sample to the specified port.
+        """Dismount a sample to the specified port.
 
         Args:
             position: 'left', 'middle', 'right'
@@ -188,8 +177,7 @@ class RobotClientMX(RobotClient):
                                   port=port, callback=callback)
 
     def set_sample_state(self, position, column, port, state, callback=None):
-        """
-        Set which pin is currently mounted on the goniometer.
+        """Set which pin is currently mounted on the goniometer.
 
         Args:
             position: 'left', 'middle', 'right'
@@ -202,3 +190,12 @@ class RobotClientMX(RobotClient):
         return self.run_operation('set_sample_state', position=position,
                                   column=column, port=port, state=state,
                                   callback=callback)
+
+    def inspected(self, callback=None):
+        """Set the robot state as inspected by staff.
+
+        Args:
+            callback: Callback function to receive operation state updates
+
+        """
+        return self.run_operation('inspected')

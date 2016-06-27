@@ -16,7 +16,7 @@ POSITIONS = ['left', 'middle', 'right']
 SLOTS = ['A', 'B', 'C', 'D']
 PORTS_PER_POSITION = 96
 DELAY_TO_PROCESS = .5
-PREPARE_TIMEOUT = 120
+PREPARE_TIMEOUT = 240
 
 
 class ServerAttr(object):

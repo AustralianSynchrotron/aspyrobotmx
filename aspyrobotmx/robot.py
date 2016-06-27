@@ -2,6 +2,11 @@ from aspyrobot import Robot
 
 
 class RobotMX(Robot):
+    """
+    ``RobotMX`` subclasses ``aspyrobot.Robot`` to add additional ``PV``\ s for
+    hardware I/O such as the robot gripper, dewar lid and heater.
+    """
+
     attrs = Robot.attrs
     attrs.update({
         'lid_open': 'LIDOPEN_STATUS',

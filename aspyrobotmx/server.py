@@ -1,5 +1,6 @@
 from itertools import repeat
 from threading import Event
+from copy import deepcopy
 
 from aspyrobot import RobotServer
 from aspyrobot.server import (foreground_operation, background_operation,
@@ -35,8 +36,9 @@ class ServerAttr(object):
 
 class RobotServerMX(RobotServer):
     """
-    A subclass of aspyrobot.RobotServer with extra functionality for the
+    A subclass of ``aspyrobot.RobotServer`` with extra functionality for the
     sample mounting robots at the MX beamlines of the Australian Synchrotron.
+    Adds operations for calibrating, probing and mounting samples.
 
     Args:
         robot (RobotMX): An instance of RobotMX to enable communication with the
@@ -57,20 +59,19 @@ class RobotServerMX(RobotServer):
         self.logger.debug('__init__')
         self.height_errors = {'left': None, 'middle': None, 'right': None}
         self.holder_types = dict.fromkeys(POSITIONS, HolderType.unknown)
-        self.puck_states = {
-            'left': dict.fromkeys(SLOTS, PuckState.unknown),
-            'middle': dict.fromkeys(SLOTS, PuckState.unknown),
-            'right': dict.fromkeys(SLOTS, PuckState.unknown),
-        }
-        self.port_states = {
-            'left': list(repeat(PortState.unknown, PORTS_PER_POSITION)),
-            'middle': list(repeat(PortState.unknown, PORTS_PER_POSITION)),
-            'right': list(repeat(PortState.unknown, PORTS_PER_POSITION)),
-        }
+        pucks_unknown = dict.fromkeys(SLOTS, int(PuckState.unknown))
+        self.puck_states = {'left': deepcopy(pucks_unknown),
+                            'middle': deepcopy(pucks_unknown),
+                            'right': deepcopy(pucks_unknown)}
+        ports_unknown = list(repeat(int(PortState.unknown), PORTS_PER_POSITION))
+        self.port_states = {'left': deepcopy(ports_unknown),
+                            'middle': deepcopy(ports_unknown),
+                            'right': deepcopy(ports_unknown)}
+        port_distances_unknown = list(repeat(None, PORTS_PER_POSITION))
         self.port_distances = {
-            'left': list(repeat(None, PORTS_PER_POSITION)),
-            'middle': list(repeat(None, PORTS_PER_POSITION)),
-            'right': list(repeat(None, PORTS_PER_POSITION)),
+            'left': deepcopy(port_distances_unknown),
+            'middle': deepcopy(port_distances_unknown),
+            'right': deepcopy(port_distances_unknown),
         }
         self._abort_prepare_timeout = Event()
         self._prepared_for_mount = False

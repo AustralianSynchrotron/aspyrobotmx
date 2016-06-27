@@ -5,20 +5,20 @@ API
 
 .. module:: aspyrobotmx
 
-Client
-------
+RobotClientMX
+-------------
 
 .. autoclass:: RobotClientMX
    :inherited-members:
 
-Server
-------
+RobotServerMX
+-------------
 
 .. autoclass:: RobotServerMX
    :inherited-members:
 
-Robot
------
+RobotMX
+-------
 
 .. autoclass:: RobotMX
    :inherited-members:

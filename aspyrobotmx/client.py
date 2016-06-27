@@ -3,6 +3,10 @@ from aspyrobot import RobotClient
 
 class RobotClientMX(RobotClient):
     """
+    ``RobotClientMX`` subclasses ``aspyrobot.RobotClient`` to add attributes and
+    methods specific to the MX application. These include operation methods to
+    calibrate, probe and mount samples.
+
     Attributes:
         current_task (str): Current task being executed on the robot
         task_message (str): Messages about current foreground task
@@ -198,4 +202,4 @@ class RobotClientMX(RobotClient):
             callback: Callback function to receive operation state updates
 
         """
-        return self.run_operation('inspected')
+        return self.run_operation('inspected', callback=callback)

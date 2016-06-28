@@ -180,6 +180,11 @@ class RobotClientMX(RobotClient):
         return self.run_operation('dismount', position=position, column=column,
                                   port=port, callback=callback)
 
+
+    def go_to_standby(self, callback=callback):
+        return self.run_operation('go_to_standby', callback=callback)
+
+
     def set_sample_state(self, position, column, port, state, callback=None):
         """Set which pin is currently mounted on the goniometer.
 

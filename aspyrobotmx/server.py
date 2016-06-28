@@ -236,7 +236,7 @@ class RobotServerMX(RobotServer):
             raise RobotError('run prepare_for_mount first')
         self._abort_prepare_timeout.set()
         port_code = '{} {} {}'.format(position[0], column, port).upper()
-        spel_operation = 'MountSamplePortAndGoHome'
+        spel_operation = 'MountSamplePort'
         message = self.robot.run_task(spel_operation, port_code)
         self.logger.info('message: %r', message)
         return message
@@ -249,6 +249,13 @@ class RobotServerMX(RobotServer):
         self._abort_prepare_timeout.set()
         port_code = '{} {} {}'.format(position[0], column, port).upper()
         message = self.robot.run_task('DismountSample', port_code)
+        self.logger.info('message: %r', message)
+        return message
+
+    @foreground_operation
+    def go_to_standby(self, handle):
+        self.logger.debug('sending robot to standby')
+        message = self.robot.run_task('GoStandby')
         self.logger.info('message: %r', message)
         return message
 

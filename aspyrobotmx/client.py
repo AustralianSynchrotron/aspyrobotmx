@@ -181,7 +181,7 @@ class RobotClientMX(RobotClient):
                                   port=port, callback=callback)
 
 
-    def go_to_standby(self, callback=callback):
+    def go_to_standby(self, callback=None):
         return self.run_operation('go_to_standby', callback=callback)
 
 

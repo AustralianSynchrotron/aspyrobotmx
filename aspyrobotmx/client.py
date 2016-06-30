@@ -183,7 +183,7 @@ class RobotClientMX(RobotClient):
     def go_to_standby(self, callback=None):
         return self.run_operation('go_to_standby', callback=callback)
 
-    def set_port_state(self, handle, position, column, port, state, callback=None):
+    def set_port_state(self, position, column, port, state, callback=None):
         """Set the state of port to be unknown, error etc.
 
         Args:

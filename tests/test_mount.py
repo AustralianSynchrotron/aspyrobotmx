@@ -4,9 +4,12 @@ from time import sleep
 import pytest
 import epics
 
+import aspyrobotmx
 from aspyrobotmx import RobotServerMX
 from aspyrobotmx import RobotMX
 
+
+aspyrobotmx.DELAY_TO_PROCESS = .01
 
 UPDATE_ADDR = 'tcp://127.0.0.1:3000'
 REQUEST_ADDR = 'tcp://127.0.0.1:3001'

@@ -35,7 +35,7 @@ def test_mount_sends_the_mount_command(server):
     server.mount(HANDLE, 'left', 'A', '1')
     process()
     assert server.robot.task_args.char_value == 'L A 1'
-    assert server.robot.generic_command.char_value == 'MountSamplePortAndGoHome'
+    assert server.robot.generic_command.char_value == 'MountSamplePort'
 
 
 def test_dismount_sends_the_dismount_command(server):

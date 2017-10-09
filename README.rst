@@ -13,21 +13,14 @@ Documentation is available at `<http://aspyrobotmx.readthedocs.io>`_.
 Testing
 -------
 
-An EPICS IOC must be started before running the tests. Ensure EPICS base
-is installed and then run::
+The EPICS IOC in `<https://github.com/AustralianSynchrotron/robotmx-testioc>`_
+must be started before running the tests.
 
-    cd tests/fixtures/test-ioc
-    make
-    cd iocBoot/iocRobotTestIOC/
-    ./st.cmd
+Tests can then be run with ``tox`` or ``pytest``::
 
-The ``PYEPICS_LIBCA`` environment variable may also need to be set.
-
-Tests can then be run with ``tox`` or ``py.test``::
-
-    pip install -r requirements.txt
+    pip install -r requirements-dev.txt
     pip install .
-    py.test
+    pytest
 
 Running
 -------

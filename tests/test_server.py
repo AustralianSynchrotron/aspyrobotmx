@@ -1,3 +1,5 @@
+from unittest.mock import create_autospec
+
 import pytest
 import epics
 
@@ -20,9 +22,11 @@ def process():
 
 @pytest.yield_fixture
 def server():
+    make_safe = create_autospec('aspyrobotmx.make_safe.MakeSafe')
     server = RobotServerMX(robot=RobotMX('ROBOT_MX_TEST:'),
                            update_addr=UPDATE_ADDR,
-                           request_addr=REQUEST_ADDR)
+                           request_addr=REQUEST_ADDR,
+                           make_safe=make_safe)
     server.robot.task_args.put(b'\0')
     server.robot.generic_command.put(b'\0')
     server.robot.left_probe_request.put(b'\0')

@@ -1,3 +1,5 @@
+from unittest.mock import create_autospec
+
 import pytest
 
 from aspyrobotmx.server import RobotServerMX
@@ -10,8 +12,10 @@ REQUEST_ADDR = 'tcp://127.0.0.1:3001'
 
 @pytest.yield_fixture
 def server():
+    make_safe = create_autospec('aspyrobotmx.make_safe.MakeSafe')
     yield RobotServerMX(robot=None, update_addr=UPDATE_ADDR,
-                        request_addr=REQUEST_ADDR)
+                        request_addr=REQUEST_ADDR,
+                        make_safe=make_safe)
 
 
 def test_update_cassette_type(server):

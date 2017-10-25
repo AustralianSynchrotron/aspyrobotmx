@@ -1,4 +1,4 @@
-from unittest.mock import MagicMock, call
+from unittest.mock import MagicMock, call, create_autospec
 from time import sleep
 
 import pytest
@@ -7,6 +7,7 @@ import epics
 import aspyrobotmx
 from aspyrobotmx import RobotServerMX
 from aspyrobotmx import RobotMX
+from aspyrobot.exceptions import RobotError
 
 
 aspyrobotmx.DELAY_TO_PROCESS = .01
@@ -23,9 +24,11 @@ def process():
 
 @pytest.yield_fixture
 def server():
+    make_safe = create_autospec('aspyrobotmx.make_safe.MakeSafe')
     server = RobotServerMX(robot=RobotMX('ROBOT_MX_TEST:'),
                            update_addr=UPDATE_ADDR,
-                           request_addr=REQUEST_ADDR)
+                           request_addr=REQUEST_ADDR,
+                           make_safe=make_safe)
     server.robot.closest_point.put(0)
     server.robot.task_args.put(b'\0')
     server.robot.generic_command.put(b'\0')
@@ -35,7 +38,10 @@ def server():
 
 def test_mount_sends_the_mount_command(server):
     server._prepared_for_mount = True
-    server.mount(HANDLE, 'left', 'A', '1')
+    try:
+        server._mount(HANDLE, 'left', 'A', '1')
+    except RobotError:
+        pass
     process()
     assert server.robot.task_args.char_value == 'L A 1'
     assert server.robot.generic_command.char_value == 'MountSamplePort'
@@ -43,7 +49,10 @@ def test_mount_sends_the_mount_command(server):
 
 def test_dismount_sends_the_dismount_command(server):
     server._prepared_for_mount = True
-    server.dismount(HANDLE, 'left', 'A', '1')
+    try:
+        server._dismount(HANDLE, 'left', 'A', '1')
+    except RobotError:
+        pass
     process()
     assert server.robot.task_args.char_value == 'L A 1'
     assert server.robot.generic_command.char_value == 'DismountSample'
@@ -52,7 +61,7 @@ def test_dismount_sends_the_dismount_command(server):
 def test_prepare_for_mount_starts_timeout_thread(server):
     server._start_prepare_timeout = MagicMock()
     server.robot.run_task = MagicMock(return_value='ok')
-    server.prepare_for_mount(HANDLE)
+    server._prepare_for_mount(HANDLE)
     assert server._start_prepare_timeout.called is True
 
 

@@ -1,5 +1,5 @@
+from unittest.mock import MagicMock, create_autospec
 import time
-from unittest.mock import MagicMock
 
 import pytest
 
@@ -14,11 +14,13 @@ handle = 1
 
 @pytest.yield_fixture
 def server():
+    make_safe = create_autospec('aspyrobotmx.make_safe.MakeSafe')
     robot = MagicMock()
     robot.snapshot.return_value = {}
     server = RobotServerMX(robot=robot, logger=MagicMock(),
                            update_addr=UPDATE_ADDR,
-                           request_addr=REQUEST_ADDR)
+                           request_addr=REQUEST_ADDR,
+                           make_safe=make_safe)
     server.setup()
     yield server
     server.shutdown()

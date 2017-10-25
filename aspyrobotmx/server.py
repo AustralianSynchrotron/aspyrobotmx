@@ -1,6 +1,8 @@
 from itertools import repeat
 from threading import Event
 from copy import deepcopy
+from concurrent.futures import ThreadPoolExecutor
+
 
 from aspyrobot import RobotServer
 from aspyrobot.server import (foreground_operation, background_operation,
@@ -10,6 +12,7 @@ from epics import poll
 from epics.ca import CAThread
 
 from .codes import HolderType, PuckState, PortState, SampleState
+from .make_safe import MakeSafeFailed
 
 
 POSITIONS = ['left', 'middle', 'right']
@@ -54,9 +57,10 @@ class RobotServerMX(RobotServer):
     dumbbell_state = ServerAttr('dumbbell_state')
     mount_message = ServerAttr('mount_message', default='')
 
-    def __init__(self, robot, **kwargs):
+    def __init__(self, robot, *, make_safe, **kwargs):
         super(RobotServerMX, self).__init__(robot, **kwargs)
         self.logger.debug('__init__')
+        self.make_safe = make_safe
         self.height_errors = {'left': None, 'middle': None, 'right': None}
         self.holder_types = dict.fromkeys(POSITIONS, HolderType.unknown)
         pucks_unknown = dict.fromkeys(SLOTS, int(PuckState.unknown))
@@ -135,6 +139,58 @@ class RobotServerMX(RobotServer):
 
     def update_mount_message(self, value, **_):
         self.mount_message = value
+
+    # ******************************************************************
+    # ****************** High Level Operations *************************
+    # ******************************************************************
+
+    @foreground_operation
+    def mount_and_premount(self, handle, position, column, port,
+                           premount_position, premount_column, premount_port):
+
+        # TODO: Handle exceptions other than RobotError and MakeSafeFailed
+
+        with ThreadPoolExecutor(max_workers=2) as executor:
+            prepare_future = executor.submit(self._prepare_for_mount, handle)
+            make_safe_future = executor.submit(self.make_safe.move_to_safe_position)
+            prepare_future.result()
+            try:
+                make_safe_future.result()
+            except MakeSafeFailed as exc:
+                self._go_to_standby(handle)
+                raise RobotError(f'make safe failed: {exc}') from exc
+        self._mount(handle, position, column, port)
+
+        def prefetch_and_go_standby():
+            self._return_placer(handle)
+            self._go_to_standby(handle)
+            # TODO: Check this is correct
+            self._prefetch(handle, premount_position, premount_column, premount_port)
+            self._go_to_standby(handle)
+
+        with ThreadPoolExecutor(max_workers=2) as executor:
+
+            undo_make_safe_future = executor.submit(self.make_safe.return_positions)
+            prefetch_and_go_standby_future = executor.submit(prefetch_and_go_standby)
+
+            try:
+                prefetch_and_go_standby_future.result()
+            except RobotError as exc:
+                robot_exc = exc
+            else:
+                robot_exc = None
+
+            try:
+                undo_make_safe_future.result()
+            except MakeSafeFailed as exc:
+                self.operation_update(handle, error=str(exc))
+                make_safe_exc = RobotError(f'undo make safe failed: {exc}')
+            else:
+                make_safe_exc = None
+
+            final_exc = robot_exc or make_safe_exc
+            if final_exc:
+                raise final_exc
 
     # ******************************************************************
     # ************************ Operations ******************************
@@ -220,45 +276,6 @@ class RobotServerMX(RobotServer):
         self.logger.info('message: %r', message)
         return message
 
-    @foreground_operation
-    def prepare_for_mount(self, handle):
-        self.logger.info('prepare_for_mount')
-        message = self.robot.run_task('PrepareForMountDismount')
-        self.logger.info('message: %r', message)
-        self._prepared_for_mount = True
-        self._start_prepare_timeout(PREPARE_TIMEOUT)
-        return message
-
-    @foreground_operation
-    def mount(self, handle, position, column, port):
-        self.logger.info('mount: %r %r %r', position, column, port)
-        if not self._prepared_for_mount:
-            raise RobotError('run prepare_for_mount first')
-        self._abort_prepare_timeout.set()
-        port_code = '{} {} {}'.format(position[0], column, port).upper()
-        spel_operation = 'MountSamplePort'
-        message = self.robot.run_task(spel_operation, port_code)
-        self.logger.info('message: %r', message)
-        return message
-
-    @foreground_operation
-    def dismount(self, handle, position, column, port):
-        self.logger.info('prepare_for_dismount: %r %r %r', position, column, port)
-        if not self._prepared_for_mount:
-            raise RobotError('run prepare_for_mount first')
-        self._abort_prepare_timeout.set()
-        port_code = '{} {} {}'.format(position[0], column, port).upper()
-        message = self.robot.run_task('DismountSample', port_code)
-        self.logger.info('message: %r', message)
-        return message
-
-    @foreground_operation
-    def go_to_standby(self, handle):
-        self.logger.debug('sending robot to standby')
-        message = self.robot.run_task('GoStandby')
-        self.logger.info('message: %r', message)
-        return message
-
     @background_operation
     def inspected(self, handle):
         message = self.robot.run_task('Inspected')
@@ -273,6 +290,53 @@ class RobotServerMX(RobotServer):
         port_code = '{}{}{}'.format(position[0], column, port).upper()
         task_args = '{} {}'.format(port_code, state)
         self.robot.run_background_task('SetSampleStatus', task_args)
+
+    # ******************************************************************
+    # ******************* Internal Operations **************************
+    # ******************************************************************
+
+    def _prepare_for_mount(self, handle):
+        self.logger.info('prepare_for_mount')
+        message = self.robot.run_task('PrepareForMountDismount')
+        self.logger.info('message: %r', message)
+        self._prepared_for_mount = True
+        self._start_prepare_timeout(PREPARE_TIMEOUT)
+        return message
+
+    def _mount(self, handle, position, column, port):
+        self.logger.info('mount: %r %r %r', position, column, port)
+        if not self._prepared_for_mount:
+            raise RobotError('run prepare_for_mount first')
+        self._abort_prepare_timeout.set()
+        port_code = '{} {} {}'.format(position[0], column, port).upper()
+        spel_operation = 'MountSamplePort'
+        message = self.robot.run_task(spel_operation, port_code)
+        self.logger.info('message: %r', message)
+        return message
+
+    def _dismount(self, handle, position, column, port):
+        self.logger.info('prepare_for_dismount: %r %r %r', position, column, port)
+        if not self._prepared_for_mount:
+            raise RobotError('run prepare_for_mount first')
+        self._abort_prepare_timeout.set()
+        port_code = '{} {} {}'.format(position[0], column, port).upper()
+        message = self.robot.run_task('DismountSample', port_code)
+        self.logger.info('message: %r', message)
+        return message
+
+    def _return_placer(self, handle):
+        message = 'TODO'
+        return message
+
+    def _prefetch(self, handle, position, column, port):
+        message = 'TODO'
+        return message
+
+    def _go_to_standby(self, handle):
+        self.logger.debug('sending robot to standby')
+        message = self.robot.run_task('GoStandby')
+        self.logger.info('message: %r', message)
+        return message
 
     # ******************************************************************
     # ********************* Helper methods *****************************

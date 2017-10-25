@@ -1,6 +1,7 @@
 from itertools import repeat
 from copy import deepcopy
 from concurrent.futures import ThreadPoolExecutor
+from typing import NamedTuple
 
 
 from aspyrobot import RobotServer
@@ -98,8 +99,8 @@ class RobotServerMX(RobotServer):
             # were empty lists for some reason.
             for puck in 'ABCD':
                 self.puck_states[position][puck] = PuckState.unknown
-            for port in range(PORTS_PER_POSITION):
-                self.port_states[position][port] = PortState.unknown
+            for port_num in range(PORTS_PER_POSITION):
+                self.port_states[position][port_num] = PortState.unknown
             update['puck_states'] = self.puck_states
             update['port_states'] = self.port_states
         self.values_update(update)
@@ -140,30 +141,32 @@ class RobotServerMX(RobotServer):
     # ******************************************************************
 
     @foreground_operation
-    def mount_and_premount(self, handle, position, column, port,
-                           premount_position, premount_column, premount_port):
+    def mount(self, handle, position, column, port_num):
+        self._prepare_for_mount_and_make_safe(handle)
+        self._mount(handle, Port(position, column, port_num))
+        self._undo_make_safe_and_finalise_robot(handle)
 
+    @foreground_operation
+    def mount_and_prefetch(self, handle, position, column, port_num,
+                           prefetch_position, prefetch_column, prefetch_port):
         # TODO: Handle make safe timeout
         # TODO: Handle exceptions other than RobotError and MakeSafeFailed
+        self._prepare_for_mount_and_make_safe(handle)
+        self._mount(handle, Port(position, column, port_num))
+        self._undo_make_safe_and_finalise_robot(handle,
+                                                Port(prefetch_position,
+                                                     prefetch_column,
+                                                     prefetch_port),
+                                                )
 
-        with ThreadPoolExecutor(max_workers=2) as executor:
-            prepare_future = executor.submit(self._prepare_for_mount, handle)
-            make_safe_future = executor.submit(self.make_safe.move_to_safe_position)
-            prepare_future.result()
-            try:
-                make_safe_future.result()
-            except MakeSafeFailed as exc:
-                self._go_to_standby(handle)
-                raise RobotError(f'make safe failed: {exc}') from exc
-
-        self._mount(handle, position, column, port)
+    def _undo_make_safe_and_finalise_robot(self, handle, prefetch_port=None):
 
         def prefetch_and_go_standby():
             self._return_placer(handle)
             self._go_to_standby(handle)
-            # TODO: Check this is correct
-            self._prefetch(handle, premount_position, premount_column, premount_port)
-            self._go_to_standby(handle)
+            if prefetch_port:
+                self._prefetch(handle, prefetch_port)
+                self._go_to_standby(handle)
 
         with ThreadPoolExecutor(max_workers=2) as executor:
 
@@ -188,6 +191,17 @@ class RobotServerMX(RobotServer):
             final_exc = robot_exc or make_safe_exc
             if final_exc:
                 raise final_exc
+
+    def _prepare_for_mount_and_make_safe(self, handle):
+        with ThreadPoolExecutor(max_workers=2) as executor:
+            prepare_future = executor.submit(self._prepare_for_mount, handle)
+            make_safe_future = executor.submit(self.make_safe.move_to_safe_position)
+            prepare_future.result()
+            try:
+                make_safe_future.result()
+            except MakeSafeFailed as exc:
+                self._go_to_standby(handle)
+                raise RobotError(f'make safe failed: {exc}') from exc
 
     # ******************************************************************
     # ************************ Operations ******************************
@@ -253,9 +267,9 @@ class RobotServerMX(RobotServer):
         self.pins_lost = 0
 
     @background_operation
-    def set_port_state(self, handle, position, column, port, state):
-        self.logger.error('%r %r %r %r', position, column, port, state)
-        args = '{} {} {} {}'.format(position[0], column, port, state).upper()
+    def set_port_state(self, handle, position, column, port_num, state):
+        self.logger.error('%r %r %r %r', position, column, port_num, state)
+        args = '{} {} {} {}'.format(position[0], column, port_num, state).upper()
         message = self.robot.run_task('SetPortState', args)
         self.logger.info('message: %r', message)
         return message
@@ -280,11 +294,12 @@ class RobotServerMX(RobotServer):
         return message
 
     @background_operation
-    def set_sample_state(self, handle, position, column, port, state):
+    def set_sample_state(self, handle, position, column, port_num, state):
         self.logger.info('set_sample_state: %r %r %r %r',
-                         position, column, port, state)
+                         position, column, port_num, state)
         state = SampleState(state).name
-        port_code = '{}{}{}'.format(position[0], column, port).upper()
+        # TODO: This should be fixed in SPEL
+        port_code = Port(position, column, port_num).code.replace(' ', '')
         task_args = '{} {}'.format(port_code, state)
         self.robot.run_background_task('SetSampleStatus', task_args)
 
@@ -298,18 +313,16 @@ class RobotServerMX(RobotServer):
         self.logger.info('message: %r', message)
         return message
 
-    def _mount(self, handle, position, column, port):
-        self.logger.info('mount: %r %r %r', position, column, port)
-        port_code = '{} {} {}'.format(position[0], column, port).upper()
+    def _mount(self, handle, port):
+        self.logger.info('mount: %r', port)
         spel_operation = 'MountSamplePort'
-        message = self.robot.run_task(spel_operation, port_code)
+        message = self.robot.run_task(spel_operation, port.code)
         self.logger.info('message: %r', message)
         return message
 
-    def _dismount(self, handle, position, column, port):
-        self.logger.info('prepare_for_dismount: %r %r %r', position, column, port)
-        port_code = '{} {} {}'.format(position[0], column, port).upper()
-        message = self.robot.run_task('DismountSample', port_code)
+    def _dismount(self, handle, port):
+        self.logger.info('prepare_for_dismount: %r', port)
+        message = self.robot.run_task('DismountSample', port.code)
         self.logger.info('message: %r', message)
         return message
 
@@ -317,7 +330,7 @@ class RobotServerMX(RobotServer):
         message = 'TODO'
         return message
 
-    def _prefetch(self, handle, position, column, port):
+    def _prefetch(self, handle, port):
         message = 'TODO'
         return message
 
@@ -337,3 +350,14 @@ class RobotServerMX(RobotServer):
             position_ports_str = ''.join(str(p) for p in position_ports)
             pv = getattr(self.robot, '{pos}_probe_request'.format(pos=position))
             pv.put(position_ports_str)
+
+
+class Port(NamedTuple):
+
+    position: str
+    column: str
+    port_num: int
+
+    @property
+    def code(self):
+        return f'{self.position[0]} {self.column} {self.port_num}'.upper()

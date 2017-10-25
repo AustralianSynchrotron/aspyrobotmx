@@ -4,6 +4,7 @@ import pytest
 
 import aspyrobotmx
 from aspyrobotmx import RobotServerMX, RobotMX
+from aspyrobotmx.server import Port
 from aspyrobotmx.make_safe import MakeSafe, MakeSafeFailed
 from aspyrobot.exceptions import RobotError
 
@@ -67,62 +68,74 @@ def _get_end_update(server):
     return list(_get_all_updates(server))[-1]
 
 
-def test_mount_and_premount_calls_prepare(
-        server, prepare_for_mount, mount, return_placer, prefetch, go_to_standby,
-        make_safe):
-    server.mount_and_premount(HANDLE, 'left', 'A', '1', 'right', 'B', '2')
+def test_mount(server, prepare_for_mount, mount, return_placer, go_to_standby, make_safe):
+    server.mount(HANDLE, 'left', 'A', 1)
     assert prepare_for_mount.called is True
     assert make_safe.move_to_safe_position.called is True
-    assert mount.call_args == call(ANY, 'left', 'A', '1')
+    assert mount.call_args == call(ANY, Port('left', 'A', 1))
     assert return_placer.called is True
     assert make_safe.return_positions.called is True
-    assert prefetch.call_args == call(ANY, 'right', 'B', '2')
     assert go_to_standby.called is True
     update = _get_end_update(server)
     assert update['error'] is None
 
 
-def test_mount_and_premount_calls_go_to_standby_if_make_safe_fails(
+def test_mount_and_prefetch_calls_prepare(
+        server, prepare_for_mount, mount, return_placer, prefetch, go_to_standby,
+        make_safe):
+    server.mount_and_prefetch(HANDLE, 'left', 'A', 1, 'right', 'B', 2)
+    assert prepare_for_mount.called is True
+    assert make_safe.move_to_safe_position.called is True
+    assert mount.call_args == call(ANY, Port('left', 'A', 1))
+    assert return_placer.called is True
+    assert make_safe.return_positions.called is True
+    assert prefetch.call_args == call(ANY, Port('right', 'B', 2))
+    assert go_to_standby.called is True
+    update = _get_end_update(server)
+    assert update['error'] is None
+
+
+def test_mount_and_prefetch_calls_go_to_standby_if_make_safe_fails(
         server, prepare_for_mount, mount, return_placer, prefetch, go_to_standby,
         make_safe):
     make_safe.move_to_safe_position.side_effect = MakeSafeFailed('bad bad happened')
-    server.mount_and_premount(HANDLE, 'left', 'A', '1', 'right', 'B', '2')
+    server.mount_and_prefetch(HANDLE, 'left', 'A', 1, 'right', 'B', 2)
     assert mount.called is False
     assert go_to_standby.called is True
     update = _get_end_update(server)
     assert update['error'] == 'make safe failed: bad bad happened'
 
 
-def test_mount_and_premount_doesnt_call_go_to_standby_if_prepare_fails(
+def test_mount_and_prefetch_doesnt_call_go_to_standby_if_prepare_fails(
         server, prepare_for_mount, mount, return_placer, prefetch, go_to_standby,
         make_safe):
     prepare_for_mount.side_effect = RobotError()
     make_safe.move_to_safe_position.side_effect = MakeSafeFailed()
-    server.mount_and_premount(HANDLE, 'left', 'A', '1', 'right', 'B', '2')
+    server.mount_and_prefetch(HANDLE, 'left', 'A', 1, 'right', 'B', 2)
     assert mount.called is False
     assert go_to_standby.called is False
     update = _get_end_update(server)
     assert update['error'] is not None
 
 
-def test_mount_and_premount_goes_to_standby_if_make_safe_return_fails(
+def test_mount_and_prefetch_goes_to_standby_if_make_safe_return_fails(
         server, prepare_for_mount, mount, return_placer, prefetch, go_to_standby,
         make_safe):
     make_safe.return_positions.side_effect = MakeSafeFailed('bad bad happened')
-    server.mount_and_premount(HANDLE, 'left', 'A', '1', 'right', 'B', '2')
+    server.mount_and_prefetch(HANDLE, 'left', 'A', 1, 'right', 'B', 2)
     assert make_safe.return_positions.called is True
-    assert prefetch.call_args == call(ANY, 'right', 'B', '2')
+    assert prefetch.call_args == call(ANY, Port('right', 'B', 2))
     assert go_to_standby.called is True
     update = _get_end_update(server)
     assert update['error'] == 'undo make safe failed: bad bad happened'
 
 
-def test_mount_and_premount_prioritises_robot_error_over_makesafe(
+def test_mount_and_prefetch_prioritises_robot_error_over_makesafe(
         server, prepare_for_mount, mount, return_placer, prefetch, go_to_standby,
         make_safe):
     make_safe.return_positions.side_effect = MakeSafeFailed('make safe error')
     return_placer.side_effect = RobotError('robot error')
-    server.mount_and_premount(HANDLE, 'left', 'A', '1', 'right', 'B', '2')
+    server.mount_and_prefetch(HANDLE, 'left', 'A', 1, 'right', 'B', 2)
     assert make_safe.return_positions.called is True
     assert prefetch.called is False
     assert go_to_standby.called is False

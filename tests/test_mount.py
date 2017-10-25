@@ -4,8 +4,8 @@ import pytest
 import epics
 
 import aspyrobotmx
-from aspyrobotmx import RobotServerMX
-from aspyrobotmx import RobotMX
+from aspyrobotmx import RobotServerMX, RobotMX
+from aspyrobotmx.server import Port
 from aspyrobot.exceptions import RobotError
 
 
@@ -38,7 +38,7 @@ def server():
 def test_mount_sends_the_mount_command(server):
     server._prepared_for_mount = True
     try:
-        server._mount(HANDLE, 'left', 'A', '1')
+        server._mount(HANDLE, Port('left', 'A', '1'))
     except RobotError:
         pass
     process()
@@ -49,7 +49,7 @@ def test_mount_sends_the_mount_command(server):
 def test_dismount_sends_the_dismount_command(server):
     server._prepared_for_mount = True
     try:
-        server._dismount(HANDLE, 'left', 'A', '1')
+        server._dismount(HANDLE, Port('left', 'A', '1'))
     except RobotError:
         pass
     process()

@@ -154,63 +154,63 @@ class RobotClientMX(RobotClient):
         """
         return self.run_operation('prepare_for_mount', callback=callback)
 
-    def mount(self, position, column, port, callback=None):
+    def mount(self, position, column, port_num, callback=None):
         """Mount a sample.
 
         Args:
             position: 'left', 'middle', 'right'
             column: 'A', 'B', ..., 'L'
-            port: 1-16
+            port_num: 1-16
             callback: Callback function to receive operation state updates
 
         """
         return self.run_operation('mount', position=position, column=column,
-                                  port=port, callback=callback)
+                                  port_num=port_num, callback=callback)
 
-    def dismount(self, position, column, port, callback=None):
+    def dismount(self, position, column, port_num, callback=None):
         """Dismount a sample to the specified port.
 
         Args:
             position: 'left', 'middle', 'right'
             column: 'A', 'B', ..., 'L'
-            port: 1-16
+            port_num: 1-16
             callback: Callback function to receive operation state updates
 
         """
         return self.run_operation('dismount', position=position, column=column,
-                                  port=port, callback=callback)
+                                  port_num=port_num, callback=callback)
 
     def go_to_standby(self, callback=None):
         return self.run_operation('go_to_standby', callback=callback)
 
-    def set_port_state(self, position, column, port, state, callback=None):
+    def set_port_state(self, position, column, port_num, state, callback=None):
         """Set the state of port to be unknown, error etc.
 
         Args:
             position: 'left', 'middle', 'right'
             column: 'A', 'B', ..., 'L'
-            port: 1-16
+            port_num: 1-16
             state (codes.PortState): port state integer
             callback: Callback function to receive operation state updates
 
         """
         return self.run_operation('set_port_state', position=position,
-                                  column=column, port=port, state=state,
+                                  column=column, port_num=port_num, state=state,
                                   callback=callback)
 
-    def set_sample_state(self, position, column, port, state, callback=None):
+    def set_sample_state(self, position, column, port_num, state, callback=None):
         """Set which pin is currently mounted on the goniometer.
 
         Args:
             position: 'left', 'middle', 'right'
             column: 'A', 'B', ..., 'L'
-            port: 1-16
+            port_num: 1-16
             state (codes.SampleState): sample state integer
             callback: Callback function to receive operation state updates
 
         """
         return self.run_operation('set_sample_state', position=position,
-                                  column=column, port=port, state=state,
+                                  column=column, port_num=port_num, state=state,
                                   callback=callback)
 
     def inspected(self, callback=None):

@@ -1,5 +1,4 @@
 from itertools import repeat
-from threading import Event
 from copy import deepcopy
 from concurrent.futures import ThreadPoolExecutor
 
@@ -9,7 +8,6 @@ from aspyrobot.server import (foreground_operation, background_operation,
                               query_operation)
 from aspyrobot.exceptions import RobotError
 from epics import poll
-from epics.ca import CAThread
 
 from .codes import HolderType, PuckState, PortState, SampleState
 from .make_safe import MakeSafeFailed
@@ -19,7 +17,6 @@ POSITIONS = ['left', 'middle', 'right']
 SLOTS = ['A', 'B', 'C', 'D']
 PORTS_PER_POSITION = 96
 DELAY_TO_PROCESS = .5
-PREPARE_TIMEOUT = 240
 
 
 class ServerAttr(object):
@@ -77,8 +74,6 @@ class RobotServerMX(RobotServer):
             'middle': deepcopy(port_distances_unknown),
             'right': deepcopy(port_distances_unknown),
         }
-        self._abort_prepare_timeout = Event()
-        self._prepared_for_mount = False
 
     def setup(self):
         super(RobotServerMX, self).setup()
@@ -148,6 +143,7 @@ class RobotServerMX(RobotServer):
     def mount_and_premount(self, handle, position, column, port,
                            premount_position, premount_column, premount_port):
 
+        # TODO: Handle make safe timeout
         # TODO: Handle exceptions other than RobotError and MakeSafeFailed
 
         with ThreadPoolExecutor(max_workers=2) as executor:
@@ -159,6 +155,7 @@ class RobotServerMX(RobotServer):
             except MakeSafeFailed as exc:
                 self._go_to_standby(handle)
                 raise RobotError(f'make safe failed: {exc}') from exc
+
         self._mount(handle, position, column, port)
 
         def prefetch_and_go_standby():
@@ -299,15 +296,10 @@ class RobotServerMX(RobotServer):
         self.logger.info('prepare_for_mount')
         message = self.robot.run_task('PrepareForMountDismount')
         self.logger.info('message: %r', message)
-        self._prepared_for_mount = True
-        self._start_prepare_timeout(PREPARE_TIMEOUT)
         return message
 
     def _mount(self, handle, position, column, port):
         self.logger.info('mount: %r %r %r', position, column, port)
-        if not self._prepared_for_mount:
-            raise RobotError('run prepare_for_mount first')
-        self._abort_prepare_timeout.set()
         port_code = '{} {} {}'.format(position[0], column, port).upper()
         spel_operation = 'MountSamplePort'
         message = self.robot.run_task(spel_operation, port_code)
@@ -316,9 +308,6 @@ class RobotServerMX(RobotServer):
 
     def _dismount(self, handle, position, column, port):
         self.logger.info('prepare_for_dismount: %r %r %r', position, column, port)
-        if not self._prepared_for_mount:
-            raise RobotError('run prepare_for_mount first')
-        self._abort_prepare_timeout.set()
         port_code = '{} {} {}'.format(position[0], column, port).upper()
         message = self.robot.run_task('DismountSample', port_code)
         self.logger.info('message: %r', message)
@@ -341,19 +330,6 @@ class RobotServerMX(RobotServer):
     # ******************************************************************
     # ********************* Helper methods *****************************
     # ******************************************************************
-
-    def _start_prepare_timeout(self, timeout):
-        self._abort_prepare_timeout.clear()
-        CAThread(target=self._prepare_timeout, args=(timeout,), daemon=True).start()
-
-    def _prepare_timeout(self, timeout):
-        self.logger.debug('waiting %s seconds for next operation to start', timeout)
-        if not self._abort_prepare_timeout.wait(timeout):
-            self._prepared_for_mount = False
-            self.logger.warning('timed out at cooling point. going home')
-            self.robot.run_task('GoHomeDueToError')
-        else:
-            self.logger.debug('operation detected. timeout aborted')
 
     def set_probe_requests(self, ports):
         for position in ['left', 'middle', 'right']:

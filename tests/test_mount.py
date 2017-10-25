@@ -1,5 +1,4 @@
-from unittest.mock import MagicMock, call, create_autospec
-from time import sleep
+from unittest.mock import create_autospec
 
 import pytest
 import epics
@@ -56,34 +55,3 @@ def test_dismount_sends_the_dismount_command(server):
     process()
     assert server.robot.task_args.char_value == 'L A 1'
     assert server.robot.generic_command.char_value == 'DismountSample'
-
-
-def test_prepare_for_mount_starts_timeout_thread(server):
-    server._start_prepare_timeout = MagicMock()
-    server.robot.run_task = MagicMock(return_value='ok')
-    server._prepare_for_mount(HANDLE)
-    assert server._start_prepare_timeout.called is True
-
-
-def test_start_prepare_timeout_should_reset_timeout_and_launch_thread(server):
-    server._abort_prepare_timeout.set()
-    server._prepare_timeout = MagicMock()
-    server._start_prepare_timeout(120)
-    sleep(.01)
-    assert server._abort_prepare_timeout.is_set() is False
-    assert server._prepare_timeout.call_args == call(120)
-
-
-def test_prepare_timeout_should_start_error_task_if_timeout_runs_out(server):
-    server.robot.run_task = MagicMock(return_value='ok')
-    server._start_prepare_timeout(1)
-    sleep(1.1)
-    assert server.robot.run_task.call_args == call('GoHomeDueToError')
-
-
-def test_prepare_timeout_should_cancel_if_abort_event_is_set(server):
-    server.robot.run_task = MagicMock(return_value='ok')
-    server._start_prepare_timeout(1)
-    server._abort_prepare_timeout.set()
-    sleep(1.1)
-    assert server.robot.run_task.called is False

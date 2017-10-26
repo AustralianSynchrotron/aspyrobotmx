@@ -27,5 +27,9 @@ class RobotMX(Robot):
         'last_middle_calibration': 'MCCTS_MON',
         'last_right_calibration': 'RCCTS_MON',
         'last_goniometer_calibration': 'GCTS_MON',
+        'picker_sample': 'PICKERSAMPLE_MON',
+        'placer_sample': 'PLACERSAMPLE_MON',
+        'cavity_sample': 'CAVITYSAMPLE_MON',
+        'goniometer_sample': 'GONIOSAMPLE_MON',
     })
     attrs_r = {v: k for k, v in attrs.items()}

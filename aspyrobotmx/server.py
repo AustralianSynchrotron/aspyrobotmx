@@ -148,16 +148,46 @@ class RobotServerMX(RobotServer):
 
     @foreground_operation
     def mount_and_prefetch(self, handle, position, column, port_num,
-                           prefetch_position, prefetch_column, prefetch_port):
+                           prefetch_position, prefetch_column, prefetch_port_num):
         # TODO: Handle make safe timeout
         # TODO: Handle exceptions other than RobotError and MakeSafeFailed
         self._prepare_for_mount_and_make_safe(handle)
         self._mount(handle, Port(position, column, port_num))
-        self._undo_make_safe_and_finalise_robot(handle,
-                                                Port(prefetch_position,
-                                                     prefetch_column,
-                                                     prefetch_port),
-                                                )
+        prefetch_port = Port(prefetch_position, prefetch_column, prefetch_port_num)
+        self._undo_make_safe_and_finalise_robot(handle, prefetch_port)
+
+    @foreground_operation
+    def dismount(self, handle):
+        port_code = self.robot.goniometer_sample.get().strip()
+        if not port_code:
+            return 'no sample mounted'
+        port = Port.from_code(port_code)
+        self._prepare_for_mount_and_make_safe(handle)
+        self._dismount(handle, port)
+        self._undo_make_safe_and_finalise_robot(handle)
+
+    @foreground_operation
+    def prefetch(self, handle, position, column, port_num):
+        self._prepare_for_mount(handle)
+        self._prefetch(handle, Port(position, column, port_num))
+        self._go_to_standby(handle)
+
+    @foreground_operation
+    def return_prefetch(self, handle):
+        self._prepare_for_mount(handle)
+        self._run_return_prefetch(handle)
+        self._go_to_standby(handle)
+
+    def _prepare_for_mount_and_make_safe(self, handle):
+        with ThreadPoolExecutor(max_workers=2) as executor:
+            prepare_future = executor.submit(self._prepare_for_mount, handle)
+            make_safe_future = executor.submit(self.make_safe.move_to_safe_position)
+            prepare_future.result()
+            try:
+                make_safe_future.result()
+            except MakeSafeFailed as exc:
+                self._go_to_standby(handle)
+                raise RobotError(f'make safe failed: {exc}') from exc
 
     def _undo_make_safe_and_finalise_robot(self, handle, prefetch_port=None):
 
@@ -191,17 +221,6 @@ class RobotServerMX(RobotServer):
             final_exc = robot_exc or make_safe_exc
             if final_exc:
                 raise final_exc
-
-    def _prepare_for_mount_and_make_safe(self, handle):
-        with ThreadPoolExecutor(max_workers=2) as executor:
-            prepare_future = executor.submit(self._prepare_for_mount, handle)
-            make_safe_future = executor.submit(self.make_safe.move_to_safe_position)
-            prepare_future.result()
-            try:
-                make_safe_future.result()
-            except MakeSafeFailed as exc:
-                self._go_to_standby(handle)
-                raise RobotError(f'make safe failed: {exc}') from exc
 
     # ******************************************************************
     # ************************ Operations ******************************
@@ -334,6 +353,10 @@ class RobotServerMX(RobotServer):
         message = 'TODO'
         return message
 
+    def _run_return_prefetch(self, handle):
+        message = 'TODO'
+        return message
+
     def _go_to_standby(self, handle):
         self.logger.debug('sending robot to standby')
         message = self.robot.run_task('GoStandby')
@@ -361,3 +384,9 @@ class Port(NamedTuple):
     @property
     def code(self):
         return f'{self.position[0]} {self.column} {self.port_num}'.upper()
+
+    @classmethod
+    def from_code(cls, code):
+        pos_char, column, port_num = code.split(' ')
+        position = {'l': 'left', 'r': 'right', 'm': 'middle'}[pos_char.lower()]
+        return cls(position, column, int(port_num))

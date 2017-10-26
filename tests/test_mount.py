@@ -36,7 +36,6 @@ def server():
 
 
 def test_mount_sends_the_mount_command(server):
-    server._prepared_for_mount = True
     try:
         server._mount(HANDLE, Port('left', 'A', '1'))
     except RobotError:
@@ -47,7 +46,6 @@ def test_mount_sends_the_mount_command(server):
 
 
 def test_dismount_sends_the_dismount_command(server):
-    server._prepared_for_mount = True
     try:
         server._dismount(HANDLE, Port('left', 'A', '1'))
     except RobotError:

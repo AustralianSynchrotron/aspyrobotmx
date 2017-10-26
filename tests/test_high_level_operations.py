@@ -2,6 +2,8 @@ from unittest.mock import create_autospec, call, ANY
 
 import pytest
 
+import epics
+
 import aspyrobotmx
 from aspyrobotmx import RobotServerMX, RobotMX
 from aspyrobotmx.server import Port
@@ -42,6 +44,11 @@ def mount(mocker, server):
 
 
 @pytest.fixture
+def dismount(mocker, server):
+    yield mocker.patch.object(server, '_dismount', autospec=True)
+
+
+@pytest.fixture
 def return_placer(mocker, server):
     yield mocker.patch.object(server, '_return_placer', autospec=True)
 
@@ -49,6 +56,11 @@ def return_placer(mocker, server):
 @pytest.fixture
 def prefetch(mocker, server):
     yield mocker.patch.object(server, '_prefetch', autospec=True)
+
+
+@pytest.fixture
+def run_return_prefetch(mocker, server):
+    yield mocker.patch.object(server, '_run_return_prefetch', autospec=True)
 
 
 @pytest.fixture
@@ -68,6 +80,10 @@ def _get_end_update(server):
     return list(_get_all_updates(server))[-1]
 
 
+def process():
+    epics.poll(.5)
+
+
 def test_mount(server, prepare_for_mount, mount, return_placer, go_to_standby, make_safe):
     server.mount(HANDLE, 'left', 'A', 1)
     assert prepare_for_mount.called is True
@@ -78,6 +94,33 @@ def test_mount(server, prepare_for_mount, mount, return_placer, go_to_standby, m
     assert go_to_standby.called is True
     update = _get_end_update(server)
     assert update['error'] is None
+
+
+def test_dismount_uses_mounted_port(server, prepare_for_mount, dismount,
+                                    return_placer, go_to_standby, make_safe):
+    server.robot.goniometer_sample.put('L A 1')
+    process()
+    server.dismount(HANDLE)
+    assert prepare_for_mount.called is True
+    assert make_safe.move_to_safe_position.called is True
+    assert dismount.call_args == call(ANY, Port('left', 'A', 1))
+    assert make_safe.return_positions.called is True
+    assert go_to_standby.called is True
+    update = _get_end_update(server)
+    assert update['error'] is None
+
+
+def test_dismount_does_nothing_if_no_sample_on_goni(server, prepare_for_mount,
+                                                    dismount, return_placer,
+                                                    go_to_standby, make_safe):
+    server.robot.goniometer_sample.put('')
+    process()
+    server.dismount(HANDLE)
+    assert prepare_for_mount.called is False
+    assert make_safe.move_to_safe_position.called is False
+    update = _get_end_update(server)
+    assert update['error'] is None
+    assert update['message'] == 'no sample mounted'
 
 
 def test_mount_and_prefetch_calls_prepare(
@@ -144,3 +187,22 @@ def test_mount_and_prefetch_prioritises_robot_error_over_makesafe(
     assert make_safe_update['stage'] == 'update'
     assert make_safe_update['error'] == 'make safe error'
     assert updates[-1]['error'] == 'robot error'
+
+
+def test_prefetch(server, prepare_for_mount, prefetch, go_to_standby):
+    server.prefetch(HANDLE, 'left', 'A', 1)
+    assert prepare_for_mount.called is True
+    assert prefetch.call_args == call(ANY, Port('left', 'A', 1))
+    assert go_to_standby.called is True
+    update = _get_end_update(server)
+    assert update['error'] is None
+
+
+def test_return_prefetch(server, prepare_for_mount,
+                         run_return_prefetch, go_to_standby):
+    server.return_prefetch(HANDLE)
+    assert prepare_for_mount.called is True
+    assert run_return_prefetch.call_args == call(HANDLE)
+    assert go_to_standby.called is True
+    update = _get_end_update(server)
+    assert update['error'] is None

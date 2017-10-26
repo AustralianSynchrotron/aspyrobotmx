@@ -56,7 +56,7 @@ class RobotServerMX(RobotServer):
     mount_message = ServerAttr('mount_message', default='')
 
     def __init__(self, robot, *, make_safe, **kwargs):
-        super(RobotServerMX, self).__init__(robot, **kwargs)
+        super().__init__(robot, **kwargs)
         self.logger.debug('__init__')
         self.make_safe = make_safe
         self.height_errors = {'left': None, 'middle': None, 'right': None}
@@ -143,7 +143,7 @@ class RobotServerMX(RobotServer):
     @foreground_operation
     def mount(self, handle, position, column, port_num):
         self._prepare_for_mount_and_make_safe(handle)
-        self._mount(handle, Port(position, column, port_num))
+        self.robot.mount(Port(position, column, port_num))
         self._undo_make_safe_and_finalise_robot(handle)
 
     @foreground_operation
@@ -152,7 +152,7 @@ class RobotServerMX(RobotServer):
         # TODO: Handle make safe timeout
         # TODO: Handle exceptions other than RobotError and MakeSafeFailed
         self._prepare_for_mount_and_make_safe(handle)
-        self._mount(handle, Port(position, column, port_num))
+        self.robot.mount(Port(position, column, port_num))
         prefetch_port = Port(prefetch_position, prefetch_column, prefetch_port_num)
         self._undo_make_safe_and_finalise_robot(handle, prefetch_port)
 
@@ -163,40 +163,40 @@ class RobotServerMX(RobotServer):
             return 'no sample mounted'
         port = Port.from_code(port_code)
         self._prepare_for_mount_and_make_safe(handle)
-        self._dismount(handle, port)
+        self.robot.dismount(port)
         self._undo_make_safe_and_finalise_robot(handle)
 
     @foreground_operation
     def prefetch(self, handle, position, column, port_num):
-        self._prepare_for_mount(handle)
-        self._prefetch(handle, Port(position, column, port_num))
-        self._go_to_standby(handle)
+        self.robot.prepare_for_mount()
+        self.robot.prefetch(Port(position, column, port_num))
+        self.robot.go_to_standby()
 
     @foreground_operation
     def return_prefetch(self, handle):
-        self._prepare_for_mount(handle)
-        self._run_return_prefetch(handle)
-        self._go_to_standby(handle)
+        self.robot.prepare_for_mount()
+        self.robot.return_prefetch()
+        self.robot.go_to_standby()
 
     def _prepare_for_mount_and_make_safe(self, handle):
         with ThreadPoolExecutor(max_workers=2) as executor:
-            prepare_future = executor.submit(self._prepare_for_mount, handle)
+            prepare_future = executor.submit(self.robot.prepare_for_mount)
             make_safe_future = executor.submit(self.make_safe.move_to_safe_position)
             prepare_future.result()
             try:
                 make_safe_future.result()
             except MakeSafeFailed as exc:
-                self._go_to_standby(handle)
+                self.robot.go_to_standby()
                 raise RobotError(f'make safe failed: {exc}') from exc
 
     def _undo_make_safe_and_finalise_robot(self, handle, prefetch_port=None):
 
         def prefetch_and_go_standby():
-            self._return_placer(handle)
-            self._go_to_standby(handle)
+            self.robot.return_placer()
+            self.robot.go_to_standby()
             if prefetch_port:
-                self._prefetch(handle, prefetch_port)
-                self._go_to_standby(handle)
+                self.robot.prefetch(prefetch_port)
+                self.robot.go_to_standby()
 
         with ThreadPoolExecutor(max_workers=2) as executor:
 
@@ -321,47 +321,6 @@ class RobotServerMX(RobotServer):
         port_code = Port(position, column, port_num).code.replace(' ', '')
         task_args = '{} {}'.format(port_code, state)
         self.robot.run_background_task('SetSampleStatus', task_args)
-
-    # ******************************************************************
-    # ******************* Internal Operations **************************
-    # ******************************************************************
-
-    def _prepare_for_mount(self, handle):
-        self.logger.info('prepare_for_mount')
-        message = self.robot.run_task('PrepareForMountDismount')
-        self.logger.info('message: %r', message)
-        return message
-
-    def _mount(self, handle, port):
-        self.logger.info('mount: %r', port)
-        spel_operation = 'MountSamplePort'
-        message = self.robot.run_task(spel_operation, port.code)
-        self.logger.info('message: %r', message)
-        return message
-
-    def _dismount(self, handle, port):
-        self.logger.info('prepare_for_dismount: %r', port)
-        message = self.robot.run_task('DismountSample', port.code)
-        self.logger.info('message: %r', message)
-        return message
-
-    def _return_placer(self, handle):
-        message = 'TODO'
-        return message
-
-    def _prefetch(self, handle, port):
-        message = 'TODO'
-        return message
-
-    def _run_return_prefetch(self, handle):
-        message = 'TODO'
-        return message
-
-    def _go_to_standby(self, handle):
-        self.logger.debug('sending robot to standby')
-        message = self.robot.run_task('GoStandby')
-        self.logger.info('message: %r', message)
-        return message
 
     # ******************************************************************
     # ********************* Helper methods *****************************

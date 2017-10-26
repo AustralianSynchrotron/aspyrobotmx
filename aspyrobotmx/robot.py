@@ -33,3 +33,24 @@ class RobotMX(Robot):
         'goniometer_sample': 'GONIOSAMPLE_MON',
     })
     attrs_r = {v: k for k, v in attrs.items()}
+
+    def prepare_for_mount(self):
+        return self.run_task('PrepareForMountDismount')
+
+    def mount(self, port):
+        return self.run_task('MountSamplePort', port.code)
+
+    def dismount(self, port):
+        return self.run_task('DismountSample', port.code)
+
+    def return_placer(self):
+        return self.run_task('ReturnPlacerSample')
+
+    def prefetch(self, port):
+        return self.run_task('PrefetchSample', port.code)
+
+    def return_prefetch(self):
+        return self.run_task('ReturnPrefetchSample')
+
+    def go_to_standby(self):
+        return self.run_task('GoStandby')

@@ -198,11 +198,9 @@ class RobotServerMX(RobotServer):
             self.operation_update(handle, message='returning sample to placer')
             self.robot.return_placer()
             self.operation_update(handle, message='going to standby position')
-            self.robot.go_to_standby()
-            if not prefetch_port:
-                return
-            self.operation_update(handle, message=f'prefetching {prefetch_port}')
-            self.robot.prefetch(prefetch_port)
+            if prefetch_port:
+                self.operation_update(handle, message=f'prefetching {prefetch_port}')
+                self.robot.prefetch(prefetch_port)
             self.operation_update(handle, message='going to standby position')
             self.robot.go_to_standby()
 

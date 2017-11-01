@@ -176,15 +176,6 @@ class RobotClientMX(RobotClient):
         """
         return self.run_operation('reset_ports', ports=ports, callback=callback)
 
-    def prepare_for_mount(self, callback=None):
-        """Move the robot to the cooling point.
-
-        Args:
-            callback: Callback function to receive operation state updates
-
-        """
-        return self.run_operation('prepare_for_mount', callback=callback)
-
     def mount(self, position, column, port_num, callback=None):
         """Mount a sample.
 

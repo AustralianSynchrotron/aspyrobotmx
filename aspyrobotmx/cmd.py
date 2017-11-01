@@ -1,8 +1,11 @@
-import click
-from epics import poll
-from . import RobotMX, RobotServerMX
 import json
 import logging.config
+
+import click
+from epics import poll
+
+from . import RobotMX, RobotServerMX
+from .make_safe import MakeSafe
 
 
 @click.command()
@@ -15,7 +18,8 @@ def run_server(config, robot_name):
         if 'logging' in config:
             logging.config.dictConfig(config['logging'])
     robot = RobotMX(robot_name + ':')
-    server = RobotServerMX(robot)
+    make_safe = MakeSafe()
+    server = RobotServerMX(robot, make_safe=make_safe)
     server.setup()
     while True:
         poll()

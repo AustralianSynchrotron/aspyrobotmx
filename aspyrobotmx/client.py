@@ -39,6 +39,10 @@ class RobotClientMX(RobotClient):
         last_middle_calibration (str): Timestamp of last middle position calibration
         last_right_calibration (str): Timestamp of last right position calibration
         last_goniometer_calibration (str): Timestamp of last goni calibration
+        picker_sample (str): Sample on picker
+        placer_sample (str): Sample on placer
+        cavity_sample (str): Sample in cavity
+        goniometer_sample (str): Sample on goniometer
         holder_types (dict):
             * keys (str): `'left'`, `'middle'`, `'right'`
             * values (codes.HolderType): Type of sample holder in position
@@ -111,17 +115,44 @@ class RobotClientMX(RobotClient):
         """
         return self.run_operation('set_heater_air', value=value, callback=callback)
 
-    def calibrate(self, target, task_args, callback=None):
-        """Calibrate the robot points.
+    def calibrate_toolset(self, include_find_magnet=True, quick_mode=False,
+                          callback=None):
+        """Calibrate the toolset
 
         Args:
-            target: 'toolset', 'cassette' or 'goniometer'
-            task_args: Arguments for the calibration function
+            include_find_magnet (bool): include find magnet step
+            quick_mode (bool): ???
             callback: Callback function to receive operation state updates
 
         """
-        return self.run_operation('calibrate', target=target, task_args=task_args,
+        return self.run_operation('calibrate_toolset',
+                                  include_find_magnet=include_find_magnet,
+                                  quick_mode=quick_mode,
                                   callback=callback)
+
+    def calibrate_cassettes(self, positions, initial, callback=None):
+        """Calibrate the cassette positions
+
+        Args:
+            positions (list[Position]): positions to calibrate
+            initial (bool): start from top of cassettes
+            callback: Callback function to receive operation state updates
+
+        """
+        return self.run_operation('calibrate_cassettes',
+                                  positions=[p.value for p in positions],
+                                  initial=initial, callback=callback)
+
+    def calibrate_goniometer(self, initial, callback=None):
+        """Calibrate the goniometer
+
+        Args:
+            initial (bool): start from goniometer
+            callback: Callback function to receive operation state updates
+
+        """
+        return self.run_operation('calibrate_goniometer',
+                                  initial=initial, callback=callback)
 
     def reset_holders(self, positions, callback=None):
         """Clear the holder type and port information for the given dewar positions.
@@ -167,8 +198,17 @@ class RobotClientMX(RobotClient):
         return self.run_operation('mount', position=position, column=column,
                                   port_num=port_num, callback=callback)
 
-    def dismount(self, position, column, port_num, callback=None):
-        """Dismount a sample to the specified port.
+    def dismount(self, callback=None):
+        """Dismount a sample.
+
+        Args:
+            callback: Callback function to receive operation state updates
+
+        """
+        return self.run_operation('dismount', callback=callback)
+
+    def prefetch(self, position, column, port_num, callback=None):
+        """Prefetch a sample.
 
         Args:
             position: 'left', 'middle', 'right'
@@ -177,11 +217,39 @@ class RobotClientMX(RobotClient):
             callback: Callback function to receive operation state updates
 
         """
-        return self.run_operation('dismount', position=position, column=column,
+        return self.run_operation('prefetch', position=position, column=column,
                                   port_num=port_num, callback=callback)
 
-    def go_to_standby(self, callback=None):
-        return self.run_operation('go_to_standby', callback=callback)
+    def return_prefetch(self, callback=None):
+        """Return a prefetched sample to it's port.
+
+        Args:
+            callback: Callback function to receive operation state updates
+
+        """
+        return self.run_operation('return_prefetch', callback=callback)
+
+    def mount_and_prefetch(self, position, column, port_num,
+                           prefetch_position, prefetch_column, prefetch_port_num,
+                           callback=None):
+        """Mount a sample and prefetch another sample.
+
+        Args:
+            position: 'left', 'middle', 'right'
+            column: 'A', 'B', ..., 'L'
+            port_num: 1-16
+            prefetch_position: 'left', 'middle', 'right'
+            prefetch_column: 'A', 'B', ..., 'L'
+            prefetch_port_num: 1-16
+            callback: Callback function to receive operation state updates
+
+        """
+        return self.run_operation('mount_and_prefetch', position=position,
+                                  column=column, port_num=port_num,
+                                  prefetch_position=prefetch_position,
+                                  prefetch_column=prefetch_column,
+                                  prefetch_port_num=prefetch_port_num,
+                                  callback=callback)
 
     def set_port_state(self, position, column, port_num, state, callback=None):
         """Set the state of port to be unknown, error etc.

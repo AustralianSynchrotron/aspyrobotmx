@@ -2,6 +2,7 @@ from itertools import repeat
 from copy import deepcopy
 from concurrent.futures import ThreadPoolExecutor
 from typing import NamedTuple
+from enum import Enum
 
 
 from aspyrobot import RobotServer
@@ -142,6 +143,7 @@ class RobotServerMX(RobotServer):
 
     @foreground_operation
     def mount(self, handle, position, column, port_num):
+        self.logger.info(f'mount: {position} {column} {port_num}')
         self._prepare_for_mount_and_make_safe(handle)
         self.robot.mount(Port(position, column, port_num))
         self._undo_make_safe_and_finalise_robot(handle)
@@ -163,6 +165,7 @@ class RobotServerMX(RobotServer):
             return 'no sample mounted'
         port = Port.from_code(port_code)
         self._prepare_for_mount_and_make_safe(handle)
+        self.operation_update(handle, message='dismounting {port}')
         self.robot.dismount(port)
         self._undo_make_safe_and_finalise_robot(handle)
 
@@ -192,11 +195,16 @@ class RobotServerMX(RobotServer):
     def _undo_make_safe_and_finalise_robot(self, handle, prefetch_port=None):
 
         def prefetch_and_go_standby():
+            self.operation_update(handle, message='returning sample to placer')
             self.robot.return_placer()
+            self.operation_update(handle, message='going to standby position')
             self.robot.go_to_standby()
-            if prefetch_port:
-                self.robot.prefetch(prefetch_port)
-                self.robot.go_to_standby()
+            if not prefetch_port:
+                return
+            self.operation_update(handle, message=f'prefetching {prefetch_port}')
+            self.robot.prefetch(prefetch_port)
+            self.operation_update(handle, message='going to standby position')
+            self.robot.go_to_standby()
 
         with ThreadPoolExecutor(max_workers=2) as executor:
 
@@ -255,18 +263,31 @@ class RobotServerMX(RobotServer):
         self.robot.heater_air_command.put(value)
 
     @foreground_operation
-    def calibrate(self, handle, target, task_args):
+    def calibrate_toolset(self, handle, *, include_find_magnet, quick_mode):
         # TODO: Validate args
-        self.logger.debug('calibrate target: %r, task_args: %r', target, task_args)
-        if target == 'toolset':
-            cmd = 'VB_MagnetCal'
-        elif target == 'cassette':
-            cmd = 'VB_CassetteCal'
-        elif target == 'goniometer':
-            cmd = 'VB_GonioCal'
-        else:
-            raise RobotError('invalid target for calibration')
-        message = self.robot.run_task(cmd, task_args)
+        self.logger.debug('calibrate toolset: %r %r', include_find_magnet, quick_mode)
+        message = self.robot.calibrate_toolset(include_find_magnet=include_find_magnet,
+                                               quick_mode=quick_mode)
+        self.logger.info('calibrate message: %r', message)
+        return message
+
+    @foreground_operation
+    def calibrate_cassettes(self, handle, *, positions, initial):
+        self.logger.debug('calibrate cassettes: %r %r', positions, initial)
+        positions = [Position(p) for p in positions]
+        message = self.robot.calibrate_cassettes(positions=positions, initial=initial)
+        self.logger.info('calibrate message: %r', message)
+        return message
+
+    @foreground_operation
+    def calibrate_goniometer(self, handle, *, initial):
+        # TODO: Validate args
+        self.logger.debug('calibrate goniometer: %r', initial)
+        if not initial:
+            self.make_safe.move_to_safe_position()
+        message = self.robot.calibrate_goniometer(initial=initial)
+        if not initial:
+            self.make_safe.return_positions()
         self.logger.info('calibrate message: %r', message)
         return message
 
@@ -349,3 +370,14 @@ class Port(NamedTuple):
         pos_char, column, port_num = code.split(' ')
         position = {'l': 'left', 'r': 'right', 'm': 'middle'}[pos_char.lower()]
         return cls(position, column, int(port_num))
+
+
+class Position(Enum):
+
+    LEFT = 'left'
+    MIDDLE = 'middle'
+    RIGHT = 'right'
+
+    @property
+    def code(self):
+        return self.value[0]

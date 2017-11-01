@@ -54,3 +54,16 @@ class RobotMX(Robot):
 
     def go_to_standby(self):
         return self.run_task('GoStandby')
+
+    def calibrate_toolset(self, *, include_find_magnet, quick_mode):
+        args = f'{include_find_magnet:d} {quick_mode:d}'
+        return self.run_task('VB_MagnetCal', args)
+
+    def calibrate_cassettes(self, *, positions, initial):
+        pos_arg = ''.join([p.code for p in positions])
+        args = f'{pos_arg} {initial:d}'
+        return self.run_task('VB_CassetteCal', args)
+
+    def calibrate_goniometer(self, *, initial):
+        args = f'{initial:d} 0 0 0 0'
+        return self.run_task('VB_GonioCal', args)

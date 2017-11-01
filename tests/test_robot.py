@@ -2,7 +2,7 @@ import pytest
 import epics
 
 from aspyrobotmx import RobotMX
-from aspyrobotmx.server import Port
+from aspyrobotmx.server import Port, Position
 from aspyrobot.exceptions import RobotError
 
 
@@ -37,3 +37,34 @@ def test_dismount_sends_the_dismount_command(robot):
     process()
     assert robot.task_args.char_value == 'R B 2'
     assert robot.generic_command.char_value == 'DismountSample'
+
+
+def test_calibrate_toolset(robot):
+    try:
+        robot.calibrate_toolset(include_find_magnet=True, quick_mode=False)
+    except RobotError:
+        pass
+    process()
+    assert robot.task_args.char_value == '1 0'
+    assert robot.generic_command.char_value == 'VB_MagnetCal'
+
+
+def test_calibrate_casettes(robot):
+    try:
+        robot.calibrate_cassettes(positions=[Position.LEFT, Position.RIGHT],
+                                  initial=False)
+    except RobotError:
+        pass
+    process()
+    assert robot.task_args.char_value == 'lr 0'
+    assert robot.generic_command.char_value == 'VB_CassetteCal'
+
+
+def test_calibrate_goniometer(robot):
+    try:
+        robot.calibrate_goniometer(initial=True)
+    except RobotError:
+        pass
+    process()
+    assert robot.task_args.char_value == '1 0 0 0 0'
+    assert robot.generic_command.char_value == 'VB_GonioCal'

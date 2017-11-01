@@ -6,7 +6,7 @@ import epics
 
 import aspyrobotmx
 from aspyrobotmx import RobotServerMX
-from aspyrobotmx.server import Port
+from aspyrobotmx.server import Port, Position
 from aspyrobotmx.make_safe import MakeSafe, MakeSafeFailed
 from aspyrobot.exceptions import RobotError
 
@@ -164,3 +164,31 @@ def test_return_prefetch(server, robot):
     assert robot.go_to_standby.called is True
     update = _get_end_update(server)
     assert update['error'] is None
+
+
+def test_calibrate_toolset(server, robot):
+    server.calibrate_toolset(HANDLE, include_find_magnet=True,
+                             quick_mode=False)
+    assert robot.calibrate_toolset.call_args == call(include_find_magnet=True,
+                                                     quick_mode=False)
+
+
+def test_calibrate_cassettes(server, robot):
+    server.calibrate_cassettes(HANDLE, positions=['left', 'right'], initial=False)
+    assert robot.calibrate_cassettes.call_args == call(
+        positions=[Position.LEFT, Position.RIGHT], initial=False
+    )
+
+
+def test_calibrate_goniometer_makes_safe_if_not_initial_cal(server, robot, make_safe):
+    server.calibrate_goniometer(HANDLE, initial=False)
+    assert make_safe.move_to_safe_position.called is True
+    assert robot.calibrate_goniometer.call_args == call(initial=False)
+    assert make_safe.return_positions.called is True
+
+
+def test_calibrate_goniometer_makes_safe_if_initial_cal(server, robot, make_safe):
+    server.calibrate_goniometer(HANDLE, initial=True)
+    assert make_safe.move_to_safe_position.called is False
+    assert robot.calibrate_goniometer.call_args == call(initial=True)
+    assert make_safe.return_positions.called is False

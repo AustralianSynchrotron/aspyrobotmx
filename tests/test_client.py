@@ -3,6 +3,7 @@ from unittest.mock import MagicMock, call
 import pytest
 
 from aspyrobotmx import RobotClientMX
+from aspyrobotmx.server import Position
 
 
 UPDATE_ADDR = 'tcp://127.0.0.1:3000'
@@ -21,12 +22,6 @@ def test_probe(client):
     client.probe(ports)
     assert client.run_operation.call_args == call('probe', ports=ports,
                                                   callback=None)
-
-
-def test_calibrate(client):
-    client.calibrate('toolset', '1 0')
-    assert client.run_operation.call_args == call('calibrate', target='toolset',
-                                                  task_args='1 0', callback=None)
 
 
 def test_set_gripper(client):
@@ -57,3 +52,24 @@ def test_reset_holders(client):
     assert client.run_operation.call_args == call('reset_holders',
                                                   positions=['left', 'right'],
                                                   callback=None)
+
+
+def test_calibrate_toolset(client):
+    client.calibrate_toolset(include_find_magnet=True, quick_mode=False)
+    assert client.run_operation.call_args == call('calibrate_toolset',
+                                                  include_find_magnet=True,
+                                                  quick_mode=False,
+                                                  callback=None)
+
+
+def test_calibrate_cassettes(client):
+    client.calibrate_cassettes([Position.LEFT], False)
+    assert client.run_operation.call_args == call('calibrate_cassettes',
+                                                  positions=['left'], initial=False,
+                                                  callback=None)
+
+
+def test_calibrate_goniometer(client):
+    client.calibrate_goniometer(False)
+    assert client.run_operation.call_args == call('calibrate_goniometer',
+                                                  initial=False, callback=None)

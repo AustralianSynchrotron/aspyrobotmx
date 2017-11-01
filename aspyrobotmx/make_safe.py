@@ -1,5 +1,5 @@
 class MakeSafeFailed(Exception):
-    """Makesafe failed"""
+    """Make safe failed"""
 
 
 class MakeSafe:

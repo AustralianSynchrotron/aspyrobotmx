@@ -38,7 +38,7 @@ class RobotMX(Robot):
         return self.run_task('PrepareForMountDismount')
 
     def mount(self, port):
-        return self.run_task('MountSamplePort', port.code)
+        return self.run_task('MountSample', port.code)
 
     def dismount(self, port):
         return self.run_task('DismountSample', port.code)
@@ -48,6 +48,10 @@ class RobotMX(Robot):
 
     def prefetch(self, port):
         return self.run_task('PrefetchSample', port.code)
+
+    def return_placer_and_prefetch(self, port=None):
+        code = port.code if port is not None else ''
+        return self.run_task('ReturnPlacerPrefetch', code)
 
     def return_prefetch(self):
         return self.run_task('ReturnPrefetchSample')

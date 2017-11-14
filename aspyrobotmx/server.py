@@ -195,12 +195,8 @@ class RobotServerMX(RobotServer):
     def _undo_make_safe_and_finalise_robot(self, handle, prefetch_port=None):
 
         def prefetch_and_go_standby():
-            self.operation_update(handle, message='returning sample to placer')
-            self.robot.return_placer()
-            self.operation_update(handle, message='going to standby position')
-            if prefetch_port:
-                self.operation_update(handle, message=f'prefetching {prefetch_port}')
-                self.robot.prefetch(prefetch_port)
+            self.operation_update(handle, message='returning placer and prefetching')
+            self.robot.return_placer_and_prefetch(prefetch_port)
             self.operation_update(handle, message='going to standby position')
             self.robot.go_to_standby()
 

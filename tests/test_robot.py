@@ -26,7 +26,7 @@ def test_mount_sends_the_mount_command(robot):
         pass
     process()
     assert robot.task_args.char_value == 'L A 1'
-    assert robot.generic_command.char_value == 'MountSamplePort'
+    assert robot.generic_command.char_value == 'MountSample'
 
 
 def test_dismount_sends_the_dismount_command(robot):

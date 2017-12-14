@@ -26,4 +26,4 @@ def run_server(config, update_address, request_address, robot_name):
                            request_addr=request_address)
     server.setup()
     while True:
-        poll()
+        poll(1e-2)

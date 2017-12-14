@@ -70,24 +70,6 @@ def test_probe_when_busy(server):
     assert 'busy' in end_update['error']
 
 
-def test_calibrate_invalid_target(server):
-    server.calibrate(HANDLE, 'blah', '1 0')
-    end_update = list(operation_updates(server))[-1]
-    assert end_update['error'] is not None
-
-
-def test_calibrate_toolset(server):
-    server.calibrate(HANDLE, 'toolset', '1 0')
-    assert server.robot.task_args.char_value == '1 0'
-
-
-def test_calibrate_when_busy(server):
-    server._foreground_lock.acquire()
-    server.calibrate(HANDLE, 'toolset', '1 0')
-    end_update = list(operation_updates(server))[-1]
-    assert end_update['error'] is not None
-
-
 def test_fetch_all_data(server):
     server.fetch_all_data()
     process()

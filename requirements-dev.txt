@@ -2,3 +2,5 @@ flake8
 pytest
 Sphinx
 pytest-mock
+pytest-forked
+responses

@@ -20,7 +20,7 @@ Tests can then be run with ``tox`` or ``pytest``::
 
     pip install -r requirements-dev.txt
     pip install .
-    pytest
+    pytest --forked
 
 Running
 -------

@@ -144,8 +144,9 @@ class RobotServerMX(RobotServer):
     @foreground_operation
     def mount(self, handle, position, column, port_num):
         self.logger.info(f'mount: {position} {column} {port_num}')
-        self._prepare_for_mount_and_make_safe(handle)
-        self.robot.mount(Port(position, column, port_num))
+        port = Port(position, column, port_num)
+        self._prepare_for_mount_and_make_safe(handle, port=port)
+        self.robot.mount(port)
         self._undo_make_safe_and_finalise_robot(handle)
 
     @foreground_operation
@@ -153,9 +154,10 @@ class RobotServerMX(RobotServer):
                            prefetch_position, prefetch_column, prefetch_port_num):
         # TODO: Handle make safe timeout
         # TODO: Handle exceptions other than RobotError and MakeSafeFailed
-        self._prepare_for_mount_and_make_safe(handle)
-        self.robot.mount(Port(position, column, port_num))
+        mount_port = Port(position, column, port_num)
         prefetch_port = Port(prefetch_position, prefetch_column, prefetch_port_num)
+        self._prepare_for_mount_and_make_safe(handle, port=mount_port)
+        self.robot.mount(mount_port)
         self._undo_make_safe_and_finalise_robot(handle, prefetch_port)
 
     @foreground_operation
@@ -181,9 +183,9 @@ class RobotServerMX(RobotServer):
         self.robot.return_prefetch()
         self.robot.go_to_standby()
 
-    def _prepare_for_mount_and_make_safe(self, handle):
+    def _prepare_for_mount_and_make_safe(self, handle, *, port=None):
         with ThreadPoolExecutor(max_workers=2) as executor:
-            prepare_future = executor.submit(self.robot.prepare_for_mount)
+            prepare_future = executor.submit(self._prepare_and_prefetch, port)
             make_safe_future = executor.submit(self.make_safe.move_to_safe_position)
             prepare_future.result()
             try:
@@ -191,6 +193,10 @@ class RobotServerMX(RobotServer):
             except MakeSafeFailed as exc:
                 self.robot.go_to_standby()
                 raise RobotError(f'make safe failed: {exc}') from exc
+
+    def _prepare_and_prefetch(self, prefetch_port=None):
+        self.robot.prepare_for_mount()
+        self.robot.return_placer_and_prefetch(prefetch_port)
 
     def _undo_make_safe_and_finalise_robot(self, handle, prefetch_port=None):
 

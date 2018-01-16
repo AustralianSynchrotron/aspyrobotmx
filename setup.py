@@ -14,6 +14,7 @@ setup(
     packages=['aspyrobotmx'],
     install_requires=[
         'aspyrobot',
+        'requests',
         'click',
         'colorlog',
     ],

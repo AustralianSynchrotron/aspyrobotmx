@@ -253,7 +253,7 @@ class RobotServerMX(RobotServer):
         state['holder_types'] = self.holder_types
         state['port_states'] = self.port_states
         state['port_distances'] = self.port_distances
-        state['lock_motors'] = self.lock_motors
+        state['motors_locked'] = self.motors_locked
         return state
 
     @background_operation

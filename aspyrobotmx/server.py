@@ -76,6 +76,7 @@ class RobotServerMX(RobotServer):
             'middle': deepcopy(port_distances_unknown),
             'right': deepcopy(port_distances_unknown),
         }
+        self.motors_locked = False
 
     def setup(self):
         super(RobotServerMX, self).setup()
@@ -85,6 +86,14 @@ class RobotServerMX(RobotServer):
         self.robot.task_args.put('PSDC LMR')
         poll(DELAY_TO_PROCESS)
         self.robot.generic_command.put('DataRequest')
+
+    def lock_motors(self):
+        self.motors_locked = True
+        self.values_update({'motors_locked': self.motors_locked})
+
+    def free_motors(self):
+        self.motors_locked = False
+        self.values_update({'motors_locked': self.motors_locked})
 
     # ******************************************************************
     # ************************ Updates ******************************
@@ -244,6 +253,7 @@ class RobotServerMX(RobotServer):
         state['holder_types'] = self.holder_types
         state['port_states'] = self.port_states
         state['port_distances'] = self.port_distances
+        state['lock_motors'] = self.lock_motors
         return state
 
     @background_operation

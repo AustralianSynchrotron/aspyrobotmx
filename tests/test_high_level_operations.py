@@ -15,8 +15,8 @@ from aspyrobot.exceptions import RobotError
 
 aspyrobotmx.DELAY_TO_PROCESS = .01
 
-UPDATE_ADDR = 'tcp://127.0.0.1:3000'
-REQUEST_ADDR = 'tcp://127.0.0.1:3001'
+UPDATE_ADDR = 'tcp://127.0.0.1:13000'
+REQUEST_ADDR = 'tcp://127.0.0.1:13001'
 
 HANDLE = 101
 
@@ -146,7 +146,6 @@ def test_dismount_uses_mounted_port(server, robot, make_safe):
     assert update['error'] is None
 
 
-@pytest.mark.xfail
 def test_dismount_does_nothing_if_no_sample_on_goni(server, robot, make_safe):
     server.robot.goniometer_sample.get.return_value = ''
     server.dismount(HANDLE)
@@ -201,7 +200,6 @@ def test_mount_and_prefetch_calls_prepare(server, robot, make_safe):
     assert update['error'] is None
 
 
-@pytest.mark.xfail
 def test_mount_and_prefetch_calls_standby_if_make_safe_fails(server, robot, make_safe):
     make_safe.move_to_safe_position.side_effect = MakeSafeFailed('bad bad happened')
     server.mount_and_prefetch(HANDLE, 'left', 'A', 1, 'right', 'B', 2)

@@ -10,8 +10,8 @@ from aspyrobotmx.codes import SampleState
 
 aspyrobotmx.DELAY_TO_PROCESS = .01
 
-UPDATE_ADDR = 'tcp://127.0.0.1:3000'
-REQUEST_ADDR = 'tcp://127.0.0.1:3001'
+UPDATE_ADDR = 'tcp://127.0.0.1:13000'
+REQUEST_ADDR = 'tcp://127.0.0.1:13001'
 
 HANDLE = 1
 

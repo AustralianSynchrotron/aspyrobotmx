@@ -6,8 +6,8 @@ from aspyrobotmx import RobotClientMX
 from aspyrobotmx.server import Position
 
 
-UPDATE_ADDR = 'tcp://127.0.0.1:3000'
-REQUEST_ADDR = 'tcp://127.0.0.1:3001'
+UPDATE_ADDR = 'tcp://127.0.0.1:13000'
+REQUEST_ADDR = 'tcp://127.0.0.1:13001'
 
 
 @pytest.fixture

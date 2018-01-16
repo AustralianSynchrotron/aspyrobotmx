@@ -6,8 +6,8 @@ from aspyrobotmx.server import RobotServerMX
 from aspyrobotmx.codes import HolderType, PuckState, PortState, DumbbellState
 
 
-UPDATE_ADDR = 'tcp://127.0.0.1:3000'
-REQUEST_ADDR = 'tcp://127.0.0.1:3001'
+UPDATE_ADDR = 'tcp://127.0.0.1:13000'
+REQUEST_ADDR = 'tcp://127.0.0.1:13001'
 
 
 @pytest.yield_fixture

@@ -13,10 +13,12 @@ class MakeSafe:
 
     def move_to_safe_position(self):
         response = requests.put(urljoin(self._base_url, '/makesafe'))
-        if len(response.json()['errors']) > 0:
-            raise MakeSafeFailed('make safe failed')
+        errors = response.json()['errors']
+        if len(errors) > 0:
+            raise MakeSafeFailed(errors[0]['message'])
 
     def return_positions(self):
         response = requests.put(urljoin(self._base_url, '/return'))
-        if len(response.json()['errors']) > 0:
-            raise MakeSafeFailed('return positions failed')
+        errors = response.json()['errors']
+        if len(errors) > 0:
+            raise MakeSafeFailed(errors[0]['message'])

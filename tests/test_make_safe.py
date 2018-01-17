@@ -32,6 +32,15 @@ def test_make_safe_raises_exception_if_errors(make_safe):
 
 
 @responses.activate
+def test_handles_makesafe_exception_without_message(make_safe):
+    responses.add(responses.PUT, 'http://example.com/makesafe',
+                  json={'errors': [{'code': 'unexpected'}]}, status=200)
+    with pytest.raises(MakeSafeFailed) as exc_info:
+        make_safe.move_to_safe_position()
+    assert 'unexpected' in str(exc_info.value)
+
+
+@responses.activate
 def test_return_positions_requests_return_endpoint(make_safe):
     responses.add(responses.PUT, 'http://example.com/return',
                   json={'errors': []}, status=200)

@@ -153,12 +153,16 @@ class RobotServerMX(RobotServer):
     @foreground_operation
     def mount(self, handle, position, column, port_num):
         self.logger.info(f'mount: {position} {column} {port_num}')
-        self.lock_motors()
         port = Port(position, column, port_num)
-        self._prepare_for_mount_and_make_safe(handle, port=port)
-        self.robot.mount(port)
-        self.free_motors()
-        self._undo_make_safe_and_finalise_robot(handle)
+        try:
+            self.robot.set_auto_heat_cool_allowed(False)
+            self.lock_motors()
+            self._prepare_for_mount_and_make_safe(handle, port=port)
+            self.robot.mount(port)
+            self.free_motors()
+            self._undo_make_safe_and_finalise_robot(handle)
+        finally:
+            self.robot.set_auto_heat_cool_allowed(True)
 
     @foreground_operation
     def mount_and_prefetch(self, handle, position, column, port_num,
@@ -167,38 +171,52 @@ class RobotServerMX(RobotServer):
         # TODO: Handle exceptions other than RobotError and MakeSafeFailed
         mount_port = Port(position, column, port_num)
         prefetch_port = Port(prefetch_position, prefetch_column, prefetch_port_num)
-        self.robot.run_background_task('g_HeatCoolAllowed = 0')
-        self.lock_motors()
-        self._prepare_for_mount_and_make_safe(handle, port=mount_port)
-        self.robot.mount(mount_port)
-        self.free_motors()
-        self._undo_make_safe_and_finalise_robot(handle, prefetch_port)
-        self.robot.run_background_task('g_HeatCoolAllowed = -1')
+        try:
+            self.robot.set_auto_heat_cool_allowed(False)
+            self.lock_motors()
+            self._prepare_for_mount_and_make_safe(handle, port=mount_port)
+            self.robot.mount(mount_port)
+            self.free_motors()
+            self._undo_make_safe_and_finalise_robot(handle, prefetch_port)
+        finally:
+            self.robot.set_auto_heat_cool_allowed(True)
 
     @foreground_operation
     def dismount(self, handle):
         port_code = self.robot.goniometer_sample.get().strip()
         if not port_code:
             return 'no sample mounted'
-        self.lock_motors()
-        port = Port.from_code(port_code)
-        self._prepare_for_mount_and_make_safe(handle)
-        self.operation_update(handle, message='dismounting {port}')
-        self.robot.dismount(port)
-        self.free_motors()
-        self._undo_make_safe_and_finalise_robot(handle)
+        try:
+            self.robot.set_auto_heat_cool_allowed(False)
+            self.lock_motors()
+            port = Port.from_code(port_code)
+            self._prepare_for_mount_and_make_safe(handle)
+            self.operation_update(handle, message='dismounting {port}')
+            self.robot.dismount(port)
+            self.free_motors()
+            self._undo_make_safe_and_finalise_robot(handle)
+        finally:
+            self.robot.set_auto_heat_cool_allowed(True)
 
     @foreground_operation
     def prefetch(self, handle, position, column, port_num):
-        self.robot.prepare_for_mount()
-        self.robot.prefetch(Port(position, column, port_num))
-        self.robot.go_to_standby()
+        try:
+            self.robot.set_auto_heat_cool_allowed(False)
+            self.robot.prepare_for_mount()
+            self.robot.prefetch(Port(position, column, port_num))
+            self.robot.go_to_standby()
+        finally:
+            self.robot.set_auto_heat_cool_allowed(True)
 
     @foreground_operation
     def return_prefetch(self, handle):
-        self.robot.prepare_for_mount()
-        self.robot.return_prefetch()
-        self.robot.go_to_standby()
+        try:
+            self.robot.set_auto_heat_cool_allowed(False)
+            self.robot.prepare_for_mount()
+            self.robot.return_prefetch()
+            self.robot.go_to_standby()
+        finally:
+            self.robot.set_auto_heat_cool_allowed(True)
 
     def _prepare_for_mount_and_make_safe(self, handle, *, port=None):
         with ThreadPoolExecutor(max_workers=2) as executor:

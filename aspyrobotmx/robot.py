@@ -71,3 +71,9 @@ class RobotMX(Robot):
     def calibrate_goniometer(self, *, initial):
         args = f'{initial:d} 0 0 0 0'
         return self.run_task('VB_GonioCal', args)
+
+    def set_auto_heat_cool_allowed(self, value):
+        if value:
+            self.run_background_task('g_HeatCoolAllowed = -1')
+        else:
+            self.run_background_task('g_HeatCoolAllowed = 0')

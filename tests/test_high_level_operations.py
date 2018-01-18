@@ -64,7 +64,6 @@ def process():
     epics.poll(.5)
 
 
-@pytest.mark.wip
 def test_mount(robot, make_safe, server, mocker):
 
     make_safe_complete = threading.Event()
@@ -78,11 +77,13 @@ def test_mount(robot, make_safe, server, mocker):
 
     # server first runs makesafe and prepares for mount
     allow_threads_to_progress()
+    assert robot.set_auto_heat_cool_allowed.call_args == call(False)
     assert make_safe.move_to_safe_position.called is True
     assert robot.prepare_for_mount.called is True
     assert robot.return_placer_and_prefetch.call_args == call(Port('left', 'A', 1))
     assert server.motors_locked is True
     robot.return_placer_and_prefetch.reset_mock()
+    robot.set_auto_heat_cool_allowed.reset_mock()
 
     # until makesafe is complete, robot must not have received mount command
     assert robot.mount.called is False
@@ -106,12 +107,18 @@ def test_mount(robot, make_safe, server, mocker):
     assert make_safe.return_positions.called is True
     assert robot.go_to_standby.called is True
     assert server.motors_locked is False
+    assert robot.set_auto_heat_cool_allowed.call_args == call(True)
 
     update = _get_end_update(server)
     assert update['error'] is None
 
 
-@pytest.mark.wip
+def test_mount_enables_auto_heat_cool_allowed_if_makesafe_fails(server, make_safe, robot):
+    make_safe.move_to_safe_position.side_effect = MakeSafeFailed('bad bad happened')
+    server.mount(HANDLE, 'left', 'A', 1)
+    assert robot.set_auto_heat_cool_allowed.call_args_list == [call(False), call(True)]
+
+
 def test_dismount_uses_mounted_port(server, robot, make_safe):
 
     server.robot.goniometer_sample.get.return_value = 'L A 1'
@@ -126,11 +133,13 @@ def test_dismount_uses_mounted_port(server, robot, make_safe):
     dismount_thread.start()
     allow_threads_to_progress()
 
+    assert robot.set_auto_heat_cool_allowed.call_args == call(False)
     assert make_safe.move_to_safe_position.called is True
     assert robot.prepare_for_mount.called is True
     assert robot.return_placer_and_prefetch.call_args == call(None)
     assert server.motors_locked is True
     robot.return_placer_and_prefetch.reset_mock()
+    robot.set_auto_heat_cool_allowed.reset_mock()
 
     make_safe_complete.set()
     allow_threads_to_progress()
@@ -147,9 +156,16 @@ def test_dismount_uses_mounted_port(server, robot, make_safe):
     assert robot.return_placer_and_prefetch.call_args == call(None)
     assert robot.go_to_standby.called is True
     assert server.motors_locked is False
+    assert robot.set_auto_heat_cool_allowed.call_args == call(True)
 
     update = _get_end_update(server)
     assert update['error'] is None
+
+
+def test_dismount_enables_auto_heat_cool_if_makesafe_fails(server, make_safe, robot):
+    make_safe.move_to_safe_position.side_effect = MakeSafeFailed('bad bad happened')
+    server.dismount(HANDLE)
+    assert robot.set_auto_heat_cool_allowed.call_args_list == [call(False), call(True)]
 
 
 def test_dismount_does_nothing_if_no_sample_on_goni(server, robot, make_safe):
@@ -162,7 +178,6 @@ def test_dismount_does_nothing_if_no_sample_on_goni(server, robot, make_safe):
     assert update['message'] == 'no sample mounted'
 
 
-@pytest.mark.wip
 def test_mount_and_prefetch_calls_prepare(server, robot, make_safe):
     make_safe_complete = threading.Event()
     make_safe.move_to_safe_position.side_effect = lambda: make_safe_complete.wait()
@@ -176,11 +191,13 @@ def test_mount_and_prefetch_calls_prepare(server, robot, make_safe):
 
     # server first runs makesafe and prepares for mount
     allow_threads_to_progress()
+    assert robot.set_auto_heat_cool_allowed.call_args == call(False)
     assert make_safe.move_to_safe_position.called is True
     assert robot.prepare_for_mount.called is True
     assert robot.return_placer_and_prefetch.call_args == call(Port('left', 'A', 1))
     assert server.motors_locked is True
     robot.return_placer_and_prefetch.reset_mock()
+    robot.set_auto_heat_cool_allowed.reset_mock()
 
     # until makesafe is complete, robot must not have received mount command
     assert robot.mount.called is False
@@ -204,6 +221,7 @@ def test_mount_and_prefetch_calls_prepare(server, robot, make_safe):
     assert make_safe.return_positions.called is True
     assert robot.go_to_standby.called is True
     assert server.motors_locked is False
+    assert robot.set_auto_heat_cool_allowed.call_args == call(True)
 
     update = _get_end_update(server)
     assert update['error'] is None
@@ -214,6 +232,7 @@ def test_mount_and_prefetch_calls_standby_if_make_safe_fails(server, robot, make
     server.mount_and_prefetch(HANDLE, 'left', 'A', 1, 'right', 'B', 2)
     assert robot.mount.called is False
     assert robot.go_to_standby.called is True
+    assert robot.set_auto_heat_cool_allowed.call_args_list == [call(False), call(True)]
     update = _get_end_update(server)
     assert update['error'] == 'make safe failed: bad bad happened'
 
@@ -263,7 +282,14 @@ def test_prefetch(server, robot):
     assert robot.prefetch.call_args == call(Port('left', 'A', 1))
     assert robot.go_to_standby.called is True
     update = _get_end_update(server)
+    assert robot.set_auto_heat_cool_allowed.call_args_list == [call(False), call(True)]
     assert update['error'] is None
+
+
+def test_prefetch_resets_auto_heat_cool_if_prefetch_fails(server, robot):
+    robot.prefetch.side_effect = Exception()
+    server.prefetch(HANDLE, 'left', 'A', 1)
+    assert robot.set_auto_heat_cool_allowed.call_args_list == [call(False), call(True)]
 
 
 def test_return_prefetch(server, robot):
@@ -271,8 +297,15 @@ def test_return_prefetch(server, robot):
     assert robot.prepare_for_mount.called is True
     assert robot.return_prefetch.call_args == call()
     assert robot.go_to_standby.called is True
+    assert robot.set_auto_heat_cool_allowed.call_args_list == [call(False), call(True)]
     update = _get_end_update(server)
     assert update['error'] is None
+
+
+def test_return_prefetch_resets_auto_heat_cool_if_return_prefetch_fails(server, robot):
+    robot.return_prefetch.side_effect = Exception()
+    server.return_prefetch(HANDLE)
+    assert robot.set_auto_heat_cool_allowed.call_args_list == [call(False), call(True)]
 
 
 def test_calibrate_toolset(server, robot):

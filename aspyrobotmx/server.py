@@ -167,11 +167,13 @@ class RobotServerMX(RobotServer):
         # TODO: Handle exceptions other than RobotError and MakeSafeFailed
         mount_port = Port(position, column, port_num)
         prefetch_port = Port(prefetch_position, prefetch_column, prefetch_port_num)
+        self.robot.run_background_task('g_HeatCoolAllowed = 0')
         self.lock_motors()
         self._prepare_for_mount_and_make_safe(handle, port=mount_port)
         self.robot.mount(mount_port)
         self.free_motors()
         self._undo_make_safe_and_finalise_robot(handle, prefetch_port)
+        self.robot.run_background_task('g_HeatCoolAllowed = -1')
 
     @foreground_operation
     def dismount(self, handle):
@@ -345,6 +347,7 @@ class RobotServerMX(RobotServer):
 
     @background_operation
     def inspected(self, handle):
+        self.free_motors()
         message = self.robot.run_task('Inspected')
         self.logger.info('message: %r', message)
         return message

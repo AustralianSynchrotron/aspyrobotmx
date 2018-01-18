@@ -52,7 +52,7 @@ def _get_all_updates(server):
     while True:
         update = server.publish_queue.get_nowait()
         yield update
-        if update['stage'] == 'end':
+        if update.get('stage') == 'end':
             break
 
 
@@ -81,6 +81,7 @@ def test_mount(robot, make_safe, server, mocker):
     assert make_safe.move_to_safe_position.called is True
     assert robot.prepare_for_mount.called is True
     assert robot.return_placer_and_prefetch.call_args == call(Port('left', 'A', 1))
+    assert server.motors_locked is True
     robot.return_placer_and_prefetch.reset_mock()
 
     # until makesafe is complete, robot must not have received mount command
@@ -95,6 +96,7 @@ def test_mount(robot, make_safe, server, mocker):
     assert robot.return_placer_and_prefetch.called is False
     assert make_safe.return_positions.called is False
     assert robot.go_to_standby.called is False
+    assert server.motors_locked is True
 
     # once mount is complete, undo-makesafe and return placer can proceed
     mount_complete.set()
@@ -103,6 +105,7 @@ def test_mount(robot, make_safe, server, mocker):
     assert robot.return_placer_and_prefetch.call_args == call(None)
     assert make_safe.return_positions.called is True
     assert robot.go_to_standby.called is True
+    assert server.motors_locked is False
 
     update = _get_end_update(server)
     assert update['error'] is None
@@ -126,6 +129,7 @@ def test_dismount_uses_mounted_port(server, robot, make_safe):
     assert make_safe.move_to_safe_position.called is True
     assert robot.prepare_for_mount.called is True
     assert robot.return_placer_and_prefetch.call_args == call(None)
+    assert server.motors_locked is True
     robot.return_placer_and_prefetch.reset_mock()
 
     make_safe_complete.set()
@@ -134,6 +138,7 @@ def test_dismount_uses_mounted_port(server, robot, make_safe):
     assert robot.dismount.call_args == call(Port('left', 'A', 1))
     assert robot.return_placer_and_prefetch.called is False
     assert robot.go_to_standby.called is False
+    assert server.motors_locked is True
 
     dismount_complete.set()
     dismount_thread.join()
@@ -141,6 +146,7 @@ def test_dismount_uses_mounted_port(server, robot, make_safe):
     assert make_safe.return_positions.called is True
     assert robot.return_placer_and_prefetch.call_args == call(None)
     assert robot.go_to_standby.called is True
+    assert server.motors_locked is False
 
     update = _get_end_update(server)
     assert update['error'] is None
@@ -173,6 +179,7 @@ def test_mount_and_prefetch_calls_prepare(server, robot, make_safe):
     assert make_safe.move_to_safe_position.called is True
     assert robot.prepare_for_mount.called is True
     assert robot.return_placer_and_prefetch.call_args == call(Port('left', 'A', 1))
+    assert server.motors_locked is True
     robot.return_placer_and_prefetch.reset_mock()
 
     # until makesafe is complete, robot must not have received mount command
@@ -187,6 +194,7 @@ def test_mount_and_prefetch_calls_prepare(server, robot, make_safe):
     assert robot.return_placer_and_prefetch.called is False
     assert make_safe.return_positions.called is False
     assert robot.go_to_standby.called is False
+    assert server.motors_locked is True
 
     # once mount is complete, undo-makesafe and return placer can proceed
     mount_complete.set()
@@ -195,6 +203,7 @@ def test_mount_and_prefetch_calls_prepare(server, robot, make_safe):
     assert robot.return_placer_and_prefetch.call_args == call(Port('right', 'B', 2))
     assert make_safe.return_positions.called is True
     assert robot.go_to_standby.called is True
+    assert server.motors_locked is False
 
     update = _get_end_update(server)
     assert update['error'] is None

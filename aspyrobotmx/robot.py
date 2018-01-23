@@ -56,8 +56,8 @@ class RobotMX(Robot):
     def return_prefetch(self):
         return self.run_task('ReturnPrefetchSample')
 
-    def park_robot(self):
-        return self.run_task('ParkRobot')
+    def park_robot(self, *, dismount):
+        return self.run_task('ParkRobot', str(int(dismount)))
 
     def go_to_standby(self):
         return self.run_task('GoStandby')

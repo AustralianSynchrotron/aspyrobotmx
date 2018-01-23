@@ -68,3 +68,23 @@ def test_calibrate_goniometer(robot):
     process()
     assert robot.task_args.char_value == '1 0 0 0 0'
     assert robot.generic_command.char_value == 'VB_GonioCal'
+
+
+def test_park_robot_with_dismount(robot):
+    try:
+        robot.park_robot(dismount=True)
+    except RobotError:
+        pass
+    process()
+    assert robot.task_args.char_value == '1'
+    assert robot.generic_command.char_value == 'ParkRobot'
+
+
+def test_park_robot_without_dismount(robot):
+    try:
+        robot.park_robot(dismount=False)
+    except RobotError:
+        pass
+    process()
+    assert robot.task_args.char_value == '0'
+    assert robot.generic_command.char_value == 'ParkRobot'

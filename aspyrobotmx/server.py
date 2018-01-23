@@ -185,12 +185,16 @@ class RobotServerMX(RobotServer):
             self.robot.set_auto_heat_cool_allowed(True)
 
     @foreground_operation
-    def park_robot(self, handle):
+    def park_robot(self, handle, dismount):
+        if not dismount:
+            self.robot.park_robot(dismount=False)
+            return
+
         try:
             self.robot.set_auto_heat_cool_allowed(False)
             self.lock_motors()
             self._prepare_for_mount_and_make_safe(handle)
-            self.robot.park_robot()
+            self.robot.park_robot(dismount=True)
             self.make_safe.return_positions()
             self.free_motors()
         finally:

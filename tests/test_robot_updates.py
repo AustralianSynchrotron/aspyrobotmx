@@ -27,17 +27,6 @@ def test_update_cassette_type(server):
     assert 'holder_types' in server.publish_queue.get_nowait()['data']
 
 
-def test_update_cassette_type_to_unknown_clears_all_data(server):
-    server.puck_states['left'] = {puck: PuckState.full for puck in 'ABCD'}
-    server.port_states['left'] = [PortState.full] * 96
-    server.update_cassette_type(value='unknown', position='left')
-    assert server.puck_states['left']['A'] == PuckState.unknown
-    assert server.port_states['left'][0] == PortState.unknown
-    update_data = server.publish_queue.get_nowait()['data']
-    assert 'puck_states' in update_data
-    assert 'port_states' in update_data
-
-
 def test_update_puck_states(server):
     server.update_puck_states(value=[1, 1, -1, 1], position='middle', start=0)
     assert server.puck_states['middle']['A'] == PuckState.empty

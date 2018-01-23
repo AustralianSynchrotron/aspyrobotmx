@@ -162,15 +162,22 @@ def test_dismount_uses_mounted_port(server, robot, make_safe):
     assert update['error'] is None
 
 
+def test_park_robot_without_dismount(server, robot, make_safe):
+    server.park_robot(HANDLE, dismount=False)
+    assert robot.park_robot.call_args == call(dismount=False)
+    assert make_safe.move_to_safe_position.called is False
+
+
 def test_park_robot(server, robot, make_safe):
 
     make_safe_complete = threading.Event()
     make_safe.move_to_safe_position.side_effect = lambda: make_safe_complete.wait()
 
     park_robot_complete = threading.Event()
-    robot.park_robot.side_effect = lambda: park_robot_complete.wait()
+    robot.park_robot.side_effect = lambda dismount: park_robot_complete.wait()
 
-    park_robot_thread = threading.Thread(target=server.park_robot, args=(HANDLE,))
+    park_robot_thread = threading.Thread(target=server.park_robot, args=(HANDLE,),
+                                         kwargs={'dismount': True})
     park_robot_thread.start()
     allow_threads_to_progress()
 

@@ -155,8 +155,6 @@ class RobotServerMX(RobotServer):
     @foreground_operation
     def mount_and_prefetch(self, handle, position, column, port_num,
                            prefetch_position, prefetch_column, prefetch_port_num):
-        # TODO: Handle make safe timeout
-        # TODO: Handle exceptions other than RobotError and MakeSafeFailed
         mount_port = Port(position, column, port_num)
         prefetch_port = Port(prefetch_position, prefetch_column, prefetch_port_num)
         try:
@@ -288,7 +286,6 @@ class RobotServerMX(RobotServer):
 
     @foreground_operation
     def calibrate_toolset(self, handle, *, include_find_magnet, quick_mode):
-        # TODO: Validate args
         self.logger.debug('calibrate toolset: %r %r', include_find_magnet, quick_mode)
         message = self.robot.calibrate_toolset(include_find_magnet=include_find_magnet,
                                                quick_mode=quick_mode)
@@ -305,7 +302,6 @@ class RobotServerMX(RobotServer):
 
     @foreground_operation
     def calibrate_goniometer(self, handle, *, initial):
-        # TODO: Validate args
         self.logger.debug('calibrate goniometer: %r', initial)
         if not initial:
             self.make_safe.move_to_safe_position()
@@ -317,7 +313,6 @@ class RobotServerMX(RobotServer):
 
     @foreground_operation
     def probe(self, handle, ports):
-        # TODO: Validate args
         self.logger.debug('probe ports: %r', ports)
         self.set_probe_requests(ports)
         poll(DELAY_TO_PROCESS)
@@ -363,7 +358,6 @@ class RobotServerMX(RobotServer):
         self.logger.info('set_sample_state: %r %r %r %r',
                          position, column, port_num, state)
         state = SampleState(state).name
-        # TODO: This should be fixed in SPEL
         port_code = Port(position, column, port_num).code.replace(' ', '')
         task_args = '{} {}'.format(port_code, state)
         self.robot.run_background_task('SetSampleStatus', task_args)

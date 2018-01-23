@@ -185,6 +185,18 @@ class RobotServerMX(RobotServer):
             self.robot.set_auto_heat_cool_allowed(True)
 
     @foreground_operation
+    def park_robot(self, handle):
+        try:
+            self.robot.set_auto_heat_cool_allowed(False)
+            self.lock_motors()
+            self._prepare_for_mount_and_make_safe(handle)
+            self.robot.park_robot()
+            self.make_safe.return_positions()
+            self.free_motors()
+        finally:
+            self.robot.set_auto_heat_cool_allowed(True)
+
+    @foreground_operation
     def prefetch(self, handle, position, column, port_num):
         try:
             self.robot.set_auto_heat_cool_allowed(False)

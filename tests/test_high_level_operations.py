@@ -162,6 +162,46 @@ def test_dismount_uses_mounted_port(server, robot, make_safe):
     assert update['error'] is None
 
 
+def test_park_robot(server, robot, make_safe):
+
+    make_safe_complete = threading.Event()
+    make_safe.move_to_safe_position.side_effect = lambda: make_safe_complete.wait()
+
+    park_robot_complete = threading.Event()
+    robot.park_robot.side_effect = lambda: park_robot_complete.wait()
+
+    park_robot_thread = threading.Thread(target=server.park_robot, args=(HANDLE,))
+    park_robot_thread.start()
+    allow_threads_to_progress()
+
+    # Before starting park operation
+    assert robot.set_auto_heat_cool_allowed.call_args == call(False)
+    assert make_safe.move_to_safe_position.called is True
+    assert robot.prepare_for_mount.called is True
+    assert robot.return_placer_and_prefetch.call_args == call(None)
+    assert server.motors_locked is True
+    robot.return_placer_and_prefetch.reset_mock()
+    robot.set_auto_heat_cool_allowed.reset_mock()
+
+    make_safe_complete.set()
+    allow_threads_to_progress()
+
+    assert robot.park_robot.called is True
+    assert robot.return_placer_and_prefetch.called is False
+    assert robot.go_to_standby.called is False
+    assert server.motors_locked is True
+
+    park_robot_complete.set()
+    park_robot_thread.join()
+
+    assert make_safe.return_positions.called is True
+    assert server.motors_locked is False
+    assert robot.set_auto_heat_cool_allowed.call_args == call(True)
+
+    update = _get_end_update(server)
+    assert update['error'] is None
+
+
 def test_dismount_enables_auto_heat_cool_if_makesafe_fails(server, make_safe, robot):
     make_safe.move_to_safe_position.side_effect = MakeSafeFailed('bad bad happened')
     server.dismount(HANDLE)

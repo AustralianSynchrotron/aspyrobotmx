@@ -100,20 +100,8 @@ class RobotServerMX(RobotServer):
     # ******************************************************************
 
     def update_cassette_type(self, value, position, **_):
-        holder_type = HolderType[value]
-        self.holder_types[position] = holder_type
-        update = {'holder_types': self.holder_types}
-        if holder_type == HolderType.unknown:
-            # TODO: This should be triggered by SPEL updates but the
-            # puck_states and port_states updates from ResetCassettes
-            # were empty lists for some reason.
-            for puck in 'ABCD':
-                self.puck_states[position][puck] = PuckState.unknown
-            for port_num in range(PORTS_PER_POSITION):
-                self.port_states[position][port_num] = PortState.unknown
-            update['puck_states'] = self.puck_states
-            update['port_states'] = self.port_states
-        self.values_update(update)
+        self.holder_types[position] = HolderType[value]
+        self.values_update({'holder_types': self.holder_types})
 
     def update_puck_states(self, value, position, start, **_):
         if not value:

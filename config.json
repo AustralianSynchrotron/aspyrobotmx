@@ -20,11 +20,18 @@
         "level": "DEBUG",
         "formatter": "colored",
         "stream": "ext://sys.stdout"
+      },
+      "file": {
+        "class": "logging.handlers.RotatingFileHandler",
+        "formatter": "standard",
+        "filename": "/tmp/aspyrobotmx.log",
+        "maxBytes": 100000000,
+        "backupCount": 7
       }
     },
     "loggers": {
       "": {
-        "handlers": ["console"],
+        "handlers": ["console", "file"],
         "level": "DEBUG"
       }
     }

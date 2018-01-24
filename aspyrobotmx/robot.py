@@ -31,6 +31,7 @@ class RobotMX(Robot):
         'placer_sample': 'PLACERSAMPLE_MON',
         'cavity_sample': 'CAVITYSAMPLE_MON',
         'goniometer_sample': 'GONIOSAMPLE_MON',
+        'goniometer_locked': 'GONIINTER_STATUS',
     })
     attrs_r = {v: k for k, v in attrs.items()}
 
@@ -63,16 +64,19 @@ class RobotMX(Robot):
         return self.run_task('GoStandby')
 
     def calibrate_toolset(self, *, include_find_magnet, quick_mode):
-        args = f'{include_find_magnet:d} {quick_mode:d}'
+        args = '{include_find_magnet:d} {quick_mode:d}'.format(
+            include_find_magnet=include_find_magnet,
+            quick_mode=quick_mode,
+        )
         return self.run_task('VB_MagnetCal', args)
 
     def calibrate_cassettes(self, *, positions, initial):
         pos_arg = ''.join([p.code for p in positions])
-        args = f'{pos_arg} {initial:d}'
+        args = '{pos_arg} {initial:d}'.format(pos_arg=pos_arg, initial=initial)
         return self.run_task('VB_CassetteCal', args)
 
     def calibrate_goniometer(self, *, initial):
-        args = f'{initial:d} 0 0 0 0'
+        args = '{initial:d} 0 0 0 0'.format(initial=initial)
         return self.run_task('VB_GonioCal', args)
 
     def set_auto_heat_cool_allowed(self, value):

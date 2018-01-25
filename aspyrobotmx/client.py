@@ -257,21 +257,6 @@ class RobotClientMX(RobotClient):
                                   column=column, port_num=port_num, state=state,
                                   callback=callback)
 
-    def set_sample_state(self, position, column, port_num, state, callback=None):
-        """Set which pin is currently mounted on the goniometer.
-
-        Args:
-            position: 'left', 'middle', 'right'
-            column: 'A', 'B', ..., 'L'
-            port_num: 1-16
-            state (codes.SampleState): sample state integer
-            callback: Callback function to receive operation state updates
-
-        """
-        return self.run_operation('set_sample_state', position=position,
-                                  column=column, port_num=port_num, state=state,
-                                  callback=callback)
-
     def inspected(self, callback=None):
         """Set the robot state as inspected by staff.
 

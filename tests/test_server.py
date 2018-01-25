@@ -5,7 +5,6 @@ import epics
 
 import aspyrobotmx
 from aspyrobotmx import RobotServerMX, RobotMX
-from aspyrobotmx.codes import SampleState
 
 
 aspyrobotmx.DELAY_TO_PROCESS = .01
@@ -113,8 +112,8 @@ def test_reset_holders(server):
     assert server.robot.generic_command.char_value == 'ResetCassettes'
 
 
-def test_set_sample_state(server):
-    server.set_sample_state(HANDLE, 'left', 'A', 1, SampleState.goniometer)
+def test_set_sample_location(server):
+    server.set_sample_location(HANDLE, 'L A 1', 'goniometer')
     process()
-    assert server.robot.task_args.char_value == 'LA1 goniometer'
+    assert server.robot.task_args.char_value == 'goniometer L A 1'
     assert server.robot.generic_command.char_value == 'SetSampleStatus'

@@ -11,7 +11,7 @@ from aspyrobot.server import (foreground_operation, background_operation,
 from aspyrobot.exceptions import RobotError
 from epics import poll
 
-from .codes import HolderType, PuckState, PortState, SampleState
+from .codes import HolderType, PuckState, PortState
 from .make_safe import MakeSafeFailed
 
 
@@ -370,12 +370,9 @@ class RobotServerMX(RobotServer):
         return message
 
     @background_operation
-    def set_sample_state(self, handle, position, column, port_num, state):
-        self.logger.info('set_sample_state: %r %r %r %r',
-                         position, column, port_num, state)
-        state = SampleState(state).name
-        port_code = Port(position, column, port_num).code.replace(' ', '')
-        task_args = '{} {}'.format(port_code, state)
+    def set_sample_location(self, handle, port_code, location):
+        self.logger.info('set_sample_location: %r %r', port_code, location)
+        task_args = '{} {}'.format(location, port_code)
         self.robot.run_background_task('SetSampleStatus', task_args)
 
     # ******************************************************************

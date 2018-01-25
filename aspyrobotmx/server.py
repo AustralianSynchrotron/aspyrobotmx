@@ -88,12 +88,16 @@ class RobotServerMX(RobotServer):
         self.robot.generic_command.put('DataRequest')
 
     def lock_motors(self):
-        self.motors_locked = True
-        self.values_update({'motors_locked': self.motors_locked})
+        self.robot.goniometer_locked.put(True)
+        if not self.motors_locked:
+            self.motors_locked = True
+            self.values_update({'motors_locked': self.motors_locked})
 
     def free_motors(self):
-        self.motors_locked = False
-        self.values_update({'motors_locked': self.motors_locked})
+        self.robot.goniometer_locked.put(False)
+        if self.motors_locked:
+            self.motors_locked = False
+            self.values_update({'motors_locked': self.motors_locked})
 
     # ******************************************************************
     # ************************ Updates ******************************
@@ -151,6 +155,7 @@ class RobotServerMX(RobotServer):
             self._undo_make_safe_and_finalise_robot(handle)
         finally:
             self.robot.set_auto_heat_cool_allowed(True)
+            self.free_motors()
 
     @foreground_operation
     def mount_and_prefetch(self, handle, position, column, port_num,
@@ -183,6 +188,7 @@ class RobotServerMX(RobotServer):
             self._undo_make_safe_and_finalise_robot(handle)
         finally:
             self.robot.set_auto_heat_cool_allowed(True)
+            self.free_motors()
 
     @foreground_operation
     def park_robot(self, handle, dismount):
@@ -196,9 +202,9 @@ class RobotServerMX(RobotServer):
             self._prepare_for_mount_and_make_safe(handle)
             self.robot.park_robot(dismount=True)
             self.make_safe.return_positions()
-            self.free_motors()
         finally:
             self.robot.set_auto_heat_cool_allowed(True)
+            self.free_motors()
 
     @foreground_operation
     def prefetch(self, handle, position, column, port_num):

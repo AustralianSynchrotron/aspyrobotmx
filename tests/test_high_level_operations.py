@@ -31,6 +31,7 @@ def robot():
     robot = create_autospec(aspyrobotmx.RobotMX)
     robot.configure_mock(foreground_done=Mock(value=True))
     robot.configure_mock(goniometer_sample=create_autospec(epics.PV))
+    robot.configure_mock(goniometer_locked=create_autospec(epics.PV))
     yield robot
 
 
@@ -77,6 +78,7 @@ def test_mount(robot, make_safe, server, mocker):
 
     # server first runs makesafe and prepares for mount
     allow_threads_to_progress()
+    assert robot.goniometer_locked.put.call_args == call(True)
     assert robot.set_auto_heat_cool_allowed.call_args == call(False)
     assert make_safe.move_to_safe_position.called is True
     assert robot.prepare_for_mount.called is True
@@ -103,6 +105,7 @@ def test_mount(robot, make_safe, server, mocker):
     mount_complete.set()
     mount_thread.join()
 
+    assert robot.goniometer_locked.put.call_args == call(False)
     assert robot.return_placer_and_prefetch.call_args == call(None)
     assert make_safe.return_positions.called is True
     assert robot.go_to_standby.called is True
@@ -117,6 +120,12 @@ def test_mount_enables_auto_heat_cool_allowed_if_makesafe_fails(server, make_saf
     make_safe.move_to_safe_position.side_effect = MakeSafeFailed('bad bad happened')
     server.mount(HANDLE, 'left', 'A', 1)
     assert robot.set_auto_heat_cool_allowed.call_args_list == [call(False), call(True)]
+
+
+def test_mount_unlocks_motors_if_makesafe_fails(server, make_safe, robot):
+    make_safe.move_to_safe_position.side_effect = MakeSafeFailed('bad bad happened')
+    server.mount(HANDLE, 'left', 'A', 1)
+    assert robot.goniometer_locked.put.call_args_list == [call(True), call(False)]
 
 
 def test_dismount_uses_mounted_port(server, robot, make_safe):
@@ -209,10 +218,28 @@ def test_park_robot(server, robot, make_safe):
     assert update['error'] is None
 
 
+def test_park_robot_enables_auto_heat_cool_if_makesafe_fails(server, make_safe, robot):
+    make_safe.move_to_safe_position.side_effect = MakeSafeFailed('bad bad happened')
+    server.park_robot(HANDLE, dismount=True)
+    assert robot.set_auto_heat_cool_allowed.call_args_list == [call(False), call(True)]
+
+
+def test_park_robot_unlocks_motors_if_makesafe_fails(server, make_safe, robot):
+    make_safe.move_to_safe_position.side_effect = MakeSafeFailed('bad bad happened')
+    server.park_robot(HANDLE, dismount=True)
+    assert robot.goniometer_locked.put.call_args_list == [call(True), call(False)]
+
+
 def test_dismount_enables_auto_heat_cool_if_makesafe_fails(server, make_safe, robot):
     make_safe.move_to_safe_position.side_effect = MakeSafeFailed('bad bad happened')
     server.dismount(HANDLE)
     assert robot.set_auto_heat_cool_allowed.call_args_list == [call(False), call(True)]
+
+
+def test_dismount_unlocks_motors_if_makesafe_fails(server, make_safe, robot):
+    make_safe.move_to_safe_position.side_effect = MakeSafeFailed('bad bad happened')
+    server.dismount(HANDLE)
+    assert robot.goniometer_locked.put.call_args_list == [call(True), call(False)]
 
 
 def test_dismount_does_nothing_if_no_sample_on_goni(server, robot, make_safe):

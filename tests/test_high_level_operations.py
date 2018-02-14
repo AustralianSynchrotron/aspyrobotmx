@@ -408,3 +408,8 @@ def test_calibrate_goniometer_makes_safe_if_initial_cal(server, robot, make_safe
     assert make_safe.move_to_safe_position.called is False
     assert robot.calibrate_goniometer.call_args == call(initial=True)
     assert make_safe.return_positions.called is False
+
+
+def test_dry_and_cool(server, robot, make_safe):
+    server.dry_and_cool(HANDLE)
+    assert robot.dry_and_cool.called

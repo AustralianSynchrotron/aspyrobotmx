@@ -18,7 +18,7 @@ from .make_safe import MakeSafeFailed
 POSITIONS = ['left', 'middle', 'right']
 SLOTS = ['A', 'B', 'C', 'D']
 PORTS_PER_POSITION = 96
-DELAY_TO_PROCESS = .5
+DELAY_TO_PROCESS = 0.5
 
 
 class ServerAttr(object):
@@ -195,7 +195,6 @@ class RobotServerMX(RobotServer):
         if not dismount:
             self.robot.park_robot(dismount=False)
             return
-
         try:
             self.robot.set_auto_heat_cool_allowed(False)
             self.lock_motors()
@@ -340,6 +339,13 @@ class RobotServerMX(RobotServer):
         poll(DELAY_TO_PROCESS)
         message = self.robot.run_task('ProbeCassettes')
         self.logger.info('probe message: %r', message)
+        return message
+
+    @foreground_operation
+    def dry_and_cool(self, handle):
+        self.logger.debug('dry_and_cool')
+        message = self.robot.dry_and_cool()
+        self.logger.info('dry_and_cool message: %r', message)
         return message
 
     @background_operation

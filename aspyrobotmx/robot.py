@@ -32,6 +32,7 @@ class RobotMX(Robot):
         'cavity_sample': 'CAVITYSAMPLE_MON',
         'goniometer_sample': 'GONIOSAMPLE_MON',
         'goniometer_locked': 'GONIINTER_STATUS',
+        'dry_countdown': 'TIMEREMAIN_MON',
     })
     attrs_r = {v: k for k, v in attrs.items()}
 
@@ -62,6 +63,9 @@ class RobotMX(Robot):
 
     def go_to_standby(self):
         return self.run_task('GoStandby')
+
+    def dry_and_cool(self):
+        return self.run_task('HeatCool')
 
     def calibrate_toolset(self, *, include_find_magnet, quick_mode):
         args = '{include_find_magnet:d} {quick_mode:d}'.format(

@@ -13,6 +13,8 @@ def process():
 @pytest.fixture
 def robot():
     robot = RobotMX('ROBOT_MX_TEST:')
+    robot.TASK_TIMEOUT = 0
+    robot.DELAY_TO_PROCESS = 0.001
     robot.task_args.put(b'\0')
     robot.generic_command.put(b'\0')
     process()
@@ -88,3 +90,13 @@ def test_park_robot_without_dismount(robot):
     process()
     assert robot.task_args.char_value == '0'
     assert robot.generic_command.char_value == 'ParkRobot'
+
+
+def test_dry_and_cool(robot):
+    try:
+        robot.dry_and_cool()
+    except RobotError:
+        pass
+    process()
+    assert robot.task_args.char_value == ''
+    assert robot.generic_command.char_value == 'HeatCool'

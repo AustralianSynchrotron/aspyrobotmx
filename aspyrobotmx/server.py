@@ -171,6 +171,7 @@ class RobotServerMX(RobotServer):
             self._undo_make_safe_and_finalise_robot(handle, prefetch_port)
         finally:
             self.robot.set_auto_heat_cool_allowed(True)
+            self.free_motors()
 
     @foreground_operation
     def dismount(self, handle):

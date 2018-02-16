@@ -301,6 +301,12 @@ def test_mount_and_prefetch_calls_prepare(server, robot, make_safe):
     assert update['error'] is None
 
 
+def test_mount_and_prefetch_unlocks_motors_if_makesafe_fails(server, make_safe, robot):
+    make_safe.move_to_safe_position.side_effect = MakeSafeFailed('bad bad happened')
+    server.mount_and_prefetch(HANDLE, 'left', 'A', 1, 'right', 'B', 2)
+    assert robot.goniometer_locked.put.call_args_list == [call(True), call(False)]
+
+
 def test_mount_and_prefetch_calls_standby_if_make_safe_fails(server, robot, make_safe):
     make_safe.move_to_safe_position.side_effect = MakeSafeFailed('bad bad happened')
     server.mount_and_prefetch(HANDLE, 'left', 'A', 1, 'right', 'B', 2)

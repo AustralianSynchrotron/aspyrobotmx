@@ -183,7 +183,7 @@ class RobotServerMX(RobotServer):
             self.lock_motors()
             port = Port.from_code(port_code)
             self._prepare_for_mount_and_make_safe(handle)
-            self.operation_update(handle, message='dismounting {port}')
+            self.operation_update(handle, message=f'dismounting {port}')
             self.robot.dismount(port)
             self.free_motors()
             self._undo_make_safe_and_finalise_robot(handle)

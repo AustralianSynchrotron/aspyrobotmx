@@ -1,6 +1,0 @@
--e git+git@github.com:AustralianSynchrotron/aspyrobot.git@master#egg=aspyrobot
-click==6.7
-colorlog==3.1.0
-numpy==1.13.3
-pyepics==3.2.6
-pyzmq==16.0.2

@@ -23,3 +23,11 @@ class MakeSafe:
         if len(errors) > 0:
             error = errors[0]
             raise MakeSafeFailed(error.get('message', error['code']))
+
+
+class DummyMakeSafe:
+    def move_to_safe_position(self):
+        pass
+
+    def return_positions(self):
+        pass

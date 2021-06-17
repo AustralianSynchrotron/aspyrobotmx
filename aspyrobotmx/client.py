@@ -198,6 +198,16 @@ class RobotClientMX(RobotClient):
         """
         return self.run_operation('dismount', callback=callback)
 
+    def park_robot(self, dismount, callback=None):
+        """Park and dismount a sample or just park the robot.
+
+        Args:
+            dismount: A boolean flag to dismount the sample before parking the robot.
+            callback: Callback function receive operation state updates. Defaults to None.
+
+        """
+        return self.run_operation("park_robot", dismount=dismount, callback=callback)
+
     def prefetch(self, position, column, port_num, callback=None):
         """Prefetch a sample.
 
